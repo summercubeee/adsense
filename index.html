@@ -49,18 +49,18 @@ function preload() {
         console.error("로드 실패:", file.key, file.src);
     });
 
-    // 704x384, 8x4 → frame 88x96
+    // 모든 캐릭터 시트: 704x384, 8x4 → 프레임 88x96
     this.load.spritesheet("player", "player.png", {
         frameWidth: 88,
         frameHeight: 96
     });
 
-    // master도 같은 규격이라고 가정 (다르면 여기도 맞게 바꾸기)
     this.load.spritesheet("master", "master.png", {
         frameWidth: 88,
         frameHeight: 96
     });
 
+    // 몬스터/아이템/배경은 단일 이미지
     this.load.image("monster", "enemy_slime.png");
 
     this.load.image("bg_fishing", "bg_fishing.png");
@@ -76,12 +76,12 @@ function preload() {
 function create() {
     const scene = this;
 
-    // 배경
+    // 배경 (처음: 낚시 수련장)
     bg = this.add.image(300, 300, "bg_fishing")
         .setDisplaySize(600, 600)
         .setAlpha(0.6);
 
-    // 박사님 (master 시트에서 0번 프레임 사용)
+    // 박사님 (master 시트 0번 프레임)
     master = this.physics.add.sprite(300, 150, "master", 0);
     master.setImmovable(true);
 
@@ -90,8 +90,7 @@ function create() {
         fill: "#ffcc00"
     }).setOrigin(0.5);
 
-    // 플레이어 애니메이션 (8x4 시트 기준, 프레임 인덱스는 필요에 따라 조정)
-    // 여기서는 각 방향당 4프레임씩, 한 행에 모여있다고 가정
+    // 플레이어 애니메이션 (8x4 시트에서 방향별로 4프레임씩 사용한다고 가정)
     this.anims.create({
         key: "down",
         frames: this.anims.generateFrameNumbers("player", { start: 0, end: 3 }),
@@ -121,7 +120,7 @@ function create() {
     player = this.physics.add.sprite(300, 450, "player", 0);
     player.setCollideWorldBounds(true);
 
-    // 몬스터 (처음엔 화면 밖)
+    // 몬스터 (초기엔 화면 밖)
     monster = this.physics.add.sprite(1000, 1000, "monster");
     monster.setScale(1.2);
 
