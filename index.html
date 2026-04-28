@@ -2,11 +2,11 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>본질센스 RPG: 가짜 노력의 종말</title>
+    <title>본질센스 RPG: 시스템의 주인</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
     <style>
-        body { margin: 0; background: #050505; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
-        canvas { border: 4px solid #333; image-rendering: pixelated; }
+        body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        canvas { border: 4px solid #444; image-rendering: pixelated; box-shadow: 0 0 40px rgba(0,0,0,1); }
     </style>
 </head>
 <body>
@@ -22,37 +22,67 @@
 
         const game = new Phaser.Game(config);
         let player, master, monster, cursors, score = 0, stage = 1;
-        let scoreText, infoText, dialogBox, dialogText;
+        let scoreText, stageLabel, dialogBox, dialogText;
 
         function preload() {
-            // 이미지 파일이 준비되면 아래 주석을 풀고 연결하세요.
-            // this.load.image('player', 'player.png');
-            // this.load.image('master', 'master.png');
-            // this.load.image('monster', 'monster.png');
-            // this.load.image('bg', 'bg_room.png');
+            // 주인공 스프라이트 시트 (제공해주신 파일명 적용)
+            // 프레임 크기는 이미지에 따라 조정이 필요할 수 있습니다 (기본 64x64 설정)
+            this.load.spritesheet('player', 'image_31e057.png', { frameWidth: 64, frameHeight: 64 });
+            
+            this.load.image('master', 'master.png');
+            this.load.image('monster', 'monster.png');
+            this.load.image('bg', 'bg.png');
         }
 
         function create() {
-            // 배경 및 기본 설정
-            this.add.grid(300, 300, 600, 600, 50, 50, 0x1a1a1a).setAlpha(0.5);
+            // 배경
+            if (this.textures.exists('bg')) {
+                this.add.image(300, 300, 'bg').setDisplaySize(600, 600).setAlpha(0.3);
+            } else {
+                this.add.grid(300, 300, 600, 600, 50, 50, 0x1a1a1a).setAlpha(0.5);
+            }
 
-            // 박사님 (스승)
-            master = this.add.rectangle(300, 100, 40, 60, 0xffcc00).setStrokeStyle(2, 0xffffff);
-            this.add.text(300, 60, '박사님', { fontSize: '14px', fill: '#ffcc00' }).setOrigin(0.5);
+            // 박사님
+            master = this.physics.add.sprite(300, 150, 'master');
+            this.add.text(300, 80, 'MASTER', { font: 'bold 16px Courier', fill: '#ffcc00' }).setOrigin(0.5);
 
-            // 주인공 (나)
-            player = this.physics.add.rectangle(300, 500, 30, 30, 0x00ff88);
-            
-            // 몬스터 (가짜 노력: 크고 못하는 것)
-            monster = this.physics.add.rectangle(1000, 1000, 80, 80, 0xff3333).setAlpha(0); // 처음엔 숨김
+            // 주인공 애니메이션 설정 (방향별 걷기)
+            this.anims.create({
+                key: 'down',
+                frames: this.anims.generateFrameNumbers('player', { start: 0, end: 3 }),
+                frameRate: 10,
+                repeat: -1
+            });
+            this.anims.create({
+                key: 'left',
+                frames: this.anims.generateFrameNumbers('player', { start: 4, end: 7 }),
+                frameRate: 10,
+                repeat: -1
+            });
+            this.anims.create({
+                key: 'right',
+                frames: this.anims.generateFrameNumbers('player', { start: 8, end: 11 }),
+                frameRate: 10,
+                repeat: -1
+            });
+            this.anims.create({
+                key: 'up',
+                frames: this.anims.generateFrameNumbers('player', { start: 12, end: 15 }),
+                frameRate: 10,
+                repeat: -1
+            });
 
-            // UI
-            scoreText = this.add.text(20, 20, '수익: $0.00', { font: 'bold 20px Courier', fill: '#00ff88' });
-            infoText = this.add.text(20, 50, 'Stage 1: 정석 수련', { font: '14px Courier', fill: '#aaa' });
+            player = this.physics.add.sprite(300, 450, 'player');
+            player.setCollideWorldBounds(true);
 
-            // 대화창
-            dialogBox = this.add.rectangle(300, 540, 560, 80, 0x000000).setAlpha(0.8).setStrokeStyle(2, 0x555555);
-            dialogText = this.add.text(300, 540, "박사님: '수련을 시작하자. 스페이스바를 눌러 질문해라.'", { 
+            monster = this.physics.add.sprite(1000, 1000, 'monster');
+            monster.setScale(1.5).setTint(0xff3333);
+
+            // UI 및 대화창
+            scoreText = this.add.text(20, 20, 'REVENUE: $0.00', { font: 'bold 24px Courier', fill: '#00ff88' });
+            stageLabel = this.add.text(20, 55, 'STAGE 1: 정석 수련', { font: '14px Courier', fill: '#aaa' });
+            dialogBox = this.add.rectangle(300, 530, 560, 100, 0x000000).setAlpha(0.85).setStrokeStyle(2, 0x00ff88);
+            dialogText = this.add.text(300, 530, "박사님: '수련을 시작하게. 가까이 와서 [Space]를 누르게.'", { 
                 font: '14px Courier', fill: '#fff', align: 'center', wordWrap: { width: 500 } 
             }).setOrigin(0.5);
 
@@ -60,68 +90,79 @@
         }
 
         function update() {
-            player.body.setVelocity(0);
-            if (cursors.left.isDown) player.body.setVelocityX(-200);
-            else if (cursors.right.isDown) player.body.setVelocityX(200);
-            if (cursors.up.isDown) player.body.setVelocityY(-200);
-            else if (cursors.down.isDown) player.body.setVelocityY(200);
+            player.setVelocity(0);
+            
+            if (cursors.left.isDown) {
+                player.setVelocityX(-160);
+                player.anims.play('left', true);
+            } else if (cursors.right.isDown) {
+                player.setVelocityX(160);
+                player.anims.play('right', true);
+            } else if (cursors.up.isDown) {
+                player.setVelocityY(-160);
+                player.anims.play('up', true);
+            } else if (cursors.down.isDown) {
+                player.setVelocityY(160);
+                player.anims.play('down', true);
+            } else {
+                player.anims.stop();
+            }
 
             if (Phaser.Input.Keyboard.JustDown(cursors.space)) {
-                handleStageLogic();
+                checkInteraction();
             }
         }
 
-        function handleStageLogic() {
-            const dist = Phaser.Math.Distance.Between(player.x, player.y, master.x, master.y);
-            const distMon = Phaser.Math.Distance.Between(player.x, player.y, monster.x, monster.y);
+        function checkInteraction() {
+            const distMaster = Phaser.Math.Distance.Between(player.x, player.y, master.x, master.y);
+            const distMonster = Phaser.Math.Distance.Between(player.x, player.y, monster.x, monster.y);
 
-            if (dist < 80) {
-                switch(stage) {
-                    case 1:
-                        updateDialog("박사님: '글은 인격이다. 검색자가 원하는 정보를 정확히 적어라. (정석 포스팅 완료)'");
-                        score += 0.01;
-                        if (score >= 0.05) { stage = 2; spawnMonster(); }
-                        break;
-                    case 2:
-                        updateDialog("박사님: '저 몬스터는 네 안의 탐욕이다. 데이터 없이 100만 키워드에 덤비지 마라.'");
-                        break;
-                    case 3:
-                        updateDialog("박사님: '데이터 안경을 줬다. 이제 낚싯대를 던져 O인지 X인지 구분해라.'");
-                        break;
-                    case 4:
-                        updateDialog("박사님: '작가에서 마케터로 전직해라. 어디서 팔지 정하고 써라.'");
-                        break;
-                    case 5:
-                        updateDialog("박사님: '광고는 시간 복사 기술이다. 80원으로 데이터를 사라.'");
-                        break;
-                    case 6:
-                        updateDialog("박사님: '마트 시스템이 완성됐다. 종량제 입구로 손님을 모아라.'");
-                        break;
-                    case 7:
-                        updateDialog("박사님: 'Pre-sell! 먼저 팔아보고 되면 확장해라. 이제 로그아웃해라.'");
-                        score = 10000;
-                        infoText.setText("Stage 7: 공간적 자유 획득!");
-                        break;
-                }
-            }
-
-            if (stage === 2 && distMon < 100) {
-                updateDialog("몬스터: '난 100만 키워드다! 데이터 없는 네 노가다는 내 HP를 깎을 수 없다!'");
-                // 가짜 노력의 허무함을 깨달아야 다음으로 넘어감
-                this.time.delayedCall(2000, () => {
+            if (distMaster < 100) {
+                runStageDialogue();
+            } else if (stage === 2 && distMonster < 120) {
+                updateDialog("몬스터: '데이터 없는 100만 키워드는 네 노가다를 비웃는다!'");
+                game.scene.scenes[0].time.delayedCall(2000, () => {
                     stage = 3;
-                    infoText.setText("Stage 3: 낚싯대 이론 (O/X)");
-                    updateDialog("박사님: '봤느냐? 0 곱하기 0은 0이다. 이제 데이터 안경을 써라.'");
+                    stageLabel.setText("STAGE 3: 데이터 안경 (O/X)");
+                    updateDialog("박사님: '보았는가? 이제 데이터 안경을 끼고 진짜 틈새를 보게.'");
                 });
             }
-            
-            scoreText.setText('수익: $' + score.toFixed(2));
         }
 
-        function spawnMonster() {
-            monster.setPosition(150, 300).setAlpha(1);
-            infoText.setText("Stage 2: 가짜 노력(크고 못하는 것)의 습격");
-            updateDialog("박사님: '가짜 노력 몬스터가 나타났다! 직접 부딪혀보고 그 무력함을 깨달아라.'");
+        function runStageDialogue() {
+            // 기존 7단계 시나리오 로직 동일
+            switch(stage) {
+                case 1:
+                    updateDialog("박사님: '글은 인격이다. 검색자가 원하는 정보를 정확히 적어라.'");
+                    score += 0.01;
+                    if (score >= 0.05) { stage = 2; monster.setPosition(150, 300); stageLabel.setText("STAGE 2: 가짜 노력의 습격"); }
+                    break;
+                case 3:
+                    updateDialog("박사님: '데이터가 O라고 하는 곳에 네 모든 힘을 쏟아부어라.'");
+                    score += 10;
+                    if (score >= 50) { stage = 4; stageLabel.setText("STAGE 4: 마케터 전직"); }
+                    break;
+                case 4:
+                    updateDialog("박사님: '어디서 팔지(트래픽처) 먼저 정하고 글을 써라!'");
+                    score += 100;
+                    if (score >= 500) { stage = 5; stageLabel.setText("STAGE 5: 시간 복사"); }
+                    break;
+                case 5:
+                    updateDialog("박사님: '광고는 시간 복사 기술이다. 80원으로 데이터를 사라.'");
+                    score += 1000;
+                    if (score >= 3000) { stage = 6; stageLabel.setText("STAGE 6: 시스템 마트 운영"); }
+                    break;
+                case 6:
+                    updateDialog("박사님: '종량제 지도로 손님을 모으고, CPA로 최종 가치를 전달하라.'");
+                    score += 5000;
+                    if (score >= 10000) { stage = 7; stageLabel.setText("STAGE 7: 공간적 자유"); }
+                    break;
+                case 7:
+                    updateDialog("박사님: '고생했다. 이제 노트북을 덮고 안식을 누리게.'");
+                    this.cameras.main.fade(2000, 0, 100, 0);
+                    break;
+            }
+            scoreText.setText('REVENUE: $' + score.toFixed(2));
         }
 
         function updateDialog(txt) {
