@@ -2,111 +2,105 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>본질센스 RPG: 월천기사단</title>
+    <title>Ad-Quest: The Core</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
     <style>
-        body { margin: 0; background-color: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: 'Apple SD Gothic Neo', sans-serif; }
-        #game-container { border: 4px solid #444; box-shadow: 0 0 20px rgba(0,255,0,0.2); }
+        body { margin: 0; background: #050505; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        canvas { border: 6px solid #222; box-shadow: 0 0 30px rgba(0,0,0,1); image-rendering: pixelated; }
     </style>
 </head>
 <body>
-    <div id="game-container"></div>
-
     <script>
         const config = {
             type: Phaser.AUTO,
-            width: 800,
-            height: 600,
-            parent: 'game-container',
-            backgroundColor: '#2d2d2d',
-            scene: {
-                preload: preload,
-                create: create,
-                update: update
-            }
+            width: 500,
+            height: 500,
+            backgroundColor: '#0a0a0a',
+            physics: { default: 'arcade', arcade: { debug: false } },
+            scene: { preload: preload, create: create, update: update }
         };
 
         const game = new Phaser.Game(config);
-        let player;
-        let master; // 박사님
-        let cursors;
-        let score = 0;
-        let scoreText;
-        let statusText;
+        let player, master, cursors, score = 0, scoreText, stageText, dialogBox, dialogText;
         let currentStage = 1;
 
-        function preload() {
-            // 실제 이미지가 없으므로 도형으로 대체하지만, 나중에 박사님 짤로 교체 가능합니다.
-            // 박사님 이미지는 'master.png'로 준비해서 경로를 넣으시면 됩니다.
-        }
+        function preload() {}
 
         function create() {
-            // 1. 배경 설정
-            this.add.grid(400, 300, 800, 600, 40, 40, 0x333333).setAlpha(0.5);
+            // 1. 짤 특유의 어두운 바닥 타일 (픽셀 느낌)
+            for (let i = 0; i < 10; i++) {
+                for (let j = 0; j < 10; j++) {
+                    let tile = this.add.rectangle(i * 50, j * 50, 48, 48, 0x111111).setOrigin(0);
+                    if ((i + j) % 2 === 0) tile.setFillStyle(0x151515);
+                }
+            }
 
-            // 2. 박사님(Master) 배치
-            master = this.add.rectangle(400, 150, 60, 80, 0xffcc00);
-            this.add.text(370, 100, '박사님', { fontSize: '18px', fill: '#fff' });
+            // 2. 박사님 (짤처럼 위엄 있는 보스 느낌)
+            master = this.add.container(250, 120);
+            let masterBody = this.add.rectangle(0, 0, 40, 60, 0xccaa00).setStrokeStyle(2, 0xffffff);
+            let masterEye = this.add.rectangle(0, -10, 30, 5, 0x000000); // 박사님의 날카로운 눈매
+            master.add([masterBody, masterEye]);
+            this.add.text(250, 70, 'MASTER AD-SENSE', { font: 'bold 16px Courier', fill: '#ccaa00' }).setOrigin(0.5);
 
-            // 3. 주인공(Player) 배치
-            player = this.add.rectangle(400, 450, 40, 40, 0x00ff00);
-            this.add.text(380, 500, '나', { fontSize: '16px', fill: '#0f0' });
+            // 3. 주인공 (나)
+            player = this.physics.add.container(250, 400);
+            let playerBody = this.add.rectangle(0, 0, 30, 30, 0x00ff88).setStrokeStyle(2, 0xffffff);
+            player.add(playerBody);
+            player.setSize(30, 30);
 
-            // 4. UI 텍스트
-            scoreText = this.add.text(20, 20, '수익: $0', { fontSize: '24px', fill: '#fff' });
-            statusText = this.add.text(20, 60, 'Stage 1: 박사님의 수련 - 정석 포스팅 중...', { fontSize: '18px', fill: '#00ff00' });
-            
-            let guideText = this.add.text(400, 560, '방향키로 이동 / 스페이스바로 박사님께 질문하기', { fontSize: '14px', fill: '#aaa' }).setOrigin(0.5);
+            // 4. 상단 UI (세련된 마케터 스타일)
+            scoreText = this.add.text(20, 20, 'REVENUE: $0.00', { font: '18px Courier', fill: '#00ff88' });
+            stageText = this.add.text(20, 45, 'MISSION: 수련의 시작', { font: '12px Courier', fill: '#888' });
+
+            // 5. 하단 대화창 (짤의 레이아웃)
+            dialogBox = this.add.rectangle(250, 450, 460, 80, 0x000000).setAlpha(0.8).setStrokeStyle(2, 0x555555).setVisible(false);
+            dialogText = this.add.text(250, 450, '', { font: '14px Courier', fill: '#ffffff', align: 'center', wordWrap: { width: 400 } }).setOrigin(0.5).setVisible(false);
 
             cursors = this.input.keyboard.createCursorKeys();
-            
-            // 5. 상호작용 (스페이스바)
-            this.input.keyboard.on('keydown-SPACE', () => {
-                handleInteraction();
-            });
         }
 
         function update() {
-            if (cursors.left.isDown) player.x -= 3;
-            else if (cursors.right.isDown) player.x += 3;
-            if (cursors.up.isDown) player.y -= 3;
-            else if (cursors.down.isDown) player.y += 3;
-        }
+            player.body.setVelocity(0);
+            if (cursors.left.isDown) player.body.setVelocityX(-200);
+            else if (cursors.right.isDown) player.body.setVelocityX(200);
+            if (cursors.up.isDown) player.body.setVelocityY(-200);
+            else if (cursors.down.isDown) player.body.setVelocityY(200);
 
-        function handleInteraction() {
-            const dist = Phaser.Math.Distance.Between(player.x, player.y, master.x, master.y);
-
-            if (dist < 100) {
-                if (currentStage === 1) {
-                    alert("박사님: '글은 네 인격이다. 정석 키워드(도로명주소)부터 써라.'");
-                    score += 0.01;
-                    if (score >= 0.05) nextStage(2, "Stage 2: 낚싯대 던지기 (데이터 확인)");
-                } 
-                else if (currentStage === 2) {
-                    alert("박사님: '내 머리를 믿지 말고 데이터를 믿어라. 클릭이 나는 곳이 진짜다.'");
-                    score += 10;
-                    if (score >= 50) nextStage(3, "Stage 3: 마트 건설 (CPA 자동화)");
-                }
-                else if (currentStage === 3) {
-                    alert("박사님: '잘했다! 이제 시스템이 너를 대신해 일할 것이다.'");
-                    score += 1000;
-                    statusText.setText("FINAL: 공간적 자유 획득! (월천 성공)");
-                    statusText.setFill("#ff00ff");
-                }
-                updateUI();
+            // 박사님 근처에 가면 자동 대화
+            let dist = Phaser.Math.Distance.Between(player.x, player.y, master.x, master.y);
+            if (dist < 80) {
+                showMasterMessage();
+            } else {
+                hideDialog();
             }
         }
 
-        function nextStage(stage, text) {
-            currentStage = stage;
-            statusText.setText(text);
-            // 스테이지가 바뀔 때 박사님 색깔 변경 (강화)
-            master.setFillStyle(0xff0000);
+        function showMasterMessage() {
+            dialogBox.setVisible(true);
+            dialogText.setVisible(true);
+            
+            if (currentStage === 1) {
+                dialogText.setText("박사님: '작가의 고집을 버려라. 클릭이 나지 않는 글은 죽은 글이다.' (Space 키로 수련)");
+                if (Phaser.Input.Keyboard.JustDown(cursors.space)) {
+                    score += 0.01;
+                    if (score >= 0.05) { currentStage = 2; stageText.setText("MISSION: 낚싯대 던지기"); }
+                }
+            } else if (currentStage === 2) {
+                dialogText.setText("박사님: '데이터를 믿어라. 낚싯대를 던져 O인지 X인지 확인해라.'");
+                if (Phaser.Input.Keyboard.JustDown(cursors.space)) {
+                    score += 50;
+                    if (score >= 500) { currentStage = 3; stageText.setText("MISSION: 마트 자동화"); }
+                }
+            } else {
+                dialogText.setText("박사님: '잘했다. 이제 시스템이 너를 자유케 하리라.'");
+                score += 1000;
+            }
+            scoreText.setText('REVENUE: $' + score.toFixed(2));
         }
 
-        function updateUI() {
-            scoreText.setText('수익: $' + score.toFixed(2));
+        function hideDialog() {
+            dialogBox.setVisible(false);
+            dialogText.setVisible(false);
         }
     </script>
 </body>
