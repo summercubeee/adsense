@@ -2,7 +2,6 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>본질센스 RPG: 가짜 노력의 종말</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
     <style>
@@ -15,11 +14,10 @@
             height: 100vh;
             overflow: hidden;
         }
-
         canvas {
             border: 4px solid #444;
             image-rendering: pixelated;
-            box-shadow: 0 0 40px rgba(0, 0, 0, 1);
+            box-shadow: 0 0 40px rgba(0,0,0,1);
         }
     </style>
 </head>
@@ -29,111 +27,117 @@ const config = {
     type: Phaser.AUTO,
     width: 600,
     height: 600,
-    backgroundColor: '#111111',
     pixelArt: true,
-    physics: {
-        default: 'arcade',
-        arcade: { debug: false }
-    },
-    scene: {
-        preload: preload,
-        create: create,
-        update: update
-    }
+    backgroundColor: "#111111",
+    physics: { default: "arcade", arcade: { debug: false } },
+    scene: { preload, create, update }
 };
 
 const game = new Phaser.Game(config);
 
+// 전역 변수
 let player, master, monster, itemSprite, bg, cursors, spaceKey;
 let score = 0, stage = 1;
 let scoreText, stageLabel, dialogBox, dialogText;
 
 function preload() {
-    this.load.on('loaderror', function (file) {
-        console.error('로드 실패:', file.key, file.src);
+    // 디버깅용 로그
+    this.load.on("loaderror", (file) => {
+        console.error("로드 실패:", file.key, file.src);
+    });
+    this.load.on("complete", () => {
+        console.log("에셋 로드 완료");
     });
 
-    this.load.on('complete', function () {
-        console.log('에셋 로드 완료');
-    });
-
-    this.load.spritesheet('player', 'player.png', {
+    // 스프라이트 / 이미지 로드 (파일명 위에서 정리한 그대로)
+    this.load.spritesheet("player", "player.png", {
         frameWidth: 64,
         frameHeight: 64
     });
 
-    this.load.image('master', 'master.png');
-    this.load.image('monster', 'enemy_slime.png');
+    // master도 시트 형식이면 spritesheet, 아니면 image로 바꿔도 됨
+    this.load.spritesheet("master", "master.png", {
+        frameWidth: 64,
+        frameHeight: 64
+    });
 
-    this.load.image('bg_fishing', 'bg_fishing.png');
-    this.load.image('bg_dataroom', 'bg_dataroom.png');
-    this.load.image('bg_construction', 'bg_construction.png');
-    this.load.image('bg_engine', 'bg_engine.png');
-    this.load.image('bg_meadow', 'bg_meadow.png');
+    this.load.image("monster", "enemy_slime.png");
 
-    this.load.image('item_goggles', 'item_goggles.png');
-    this.load.image('item_stamp', 'item_stamp.png');
+    this.load.image("bg_fishing", "bg_fishing.png");
+    this.load.image("bg_dataroom", "bg_dataroom.png");
+    this.load.image("bg_construction", "bg_construction.png");
+    this.load.image("bg_engine", "bg_engine.png");
+    this.load.image("bg_meadow", "bg_meadow.png");
+
+    this.load.image("item_goggles", "item_goggles.png");
+    this.load.image("item_stamp", "item_stamp.png");
 }
 
 function create() {
-    bg = this.add.image(300, 300, 'bg_fishing')
+    const scene = this;
+
+    // 배경
+    bg = this.add.image(300, 300, "bg_fishing")
         .setDisplaySize(600, 600)
         .setAlpha(0.6);
 
-    master = this.physics.add.sprite(300, 150, 'master');
+    // 박사님
+    master = this.physics.add.sprite(300, 150, "master");
     master.setImmovable(true);
 
-    this.add.text(300, 80, 'MASTER', {
-        font: 'bold 16px Courier',
-        fill: '#ffcc00'
+    this.add.text(300, 80, "MASTER", {
+        font: "bold 16px Courier",
+        fill: "#ffcc00"
     }).setOrigin(0.5);
 
+    // 플레이어 애니메이션
     this.anims.create({
-        key: 'down',
-        frames: this.anims.generateFrameNumbers('player', { start: 0, end: 3 }),
+        key: "down",
+        frames: this.anims.generateFrameNumbers("player", { start: 0, end: 3 }),
+        frameRate: 10,
+        repeat: -1
+    });
+    this.anims.create({
+        key: "left",
+        frames: this.anims.generateFrameNumbers("player", { start: 4, end: 7 }),
+        frameRate: 10,
+        repeat: -1
+    });
+    this.anims.create({
+        key: "right",
+        frames: this.anims.generateFrameNumbers("player", { start: 8, end: 11 }),
+        frameRate: 10,
+        repeat: -1
+    });
+    this.anims.create({
+        key: "up",
+        frames: this.anims.generateFrameNumbers("player", { start: 12, end: 15 }),
         frameRate: 10,
         repeat: -1
     });
 
-    this.anims.create({
-        key: 'left',
-        frames: this.anims.generateFrameNumbers('player', { start: 4, end: 7 }),
-        frameRate: 10,
-        repeat: -1
-    });
-
-    this.anims.create({
-        key: 'right',
-        frames: this.anims.generateFrameNumbers('player', { start: 8, end: 11 }),
-        frameRate: 10,
-        repeat: -1
-    });
-
-    this.anims.create({
-        key: 'up',
-        frames: this.anims.generateFrameNumbers('player', { start: 12, end: 15 }),
-        frameRate: 10,
-        repeat: -1
-    });
-
-    player = this.physics.add.sprite(300, 450, 'player');
+    // 플레이어
+    player = this.physics.add.sprite(300, 450, "player");
     player.setCollideWorldBounds(true);
 
-    monster = this.physics.add.sprite(1000, 1000, 'monster');
+    // 몬스터 (처음엔 화면 밖)
+    monster = this.physics.add.sprite(1000, 1000, "monster");
     monster.setScale(1.2);
 
-    itemSprite = this.add.image(300, 300, 'item_goggles')
+    // 아이템
+    itemSprite = this.add.image(300, 300, "item_goggles")
         .setVisible(false)
         .setAlpha(1);
 
-    scoreText = this.add.text(20, 20, 'REVENUE: $0.00', {
-        font: 'bold 24px Courier',
-        fill: '#00ff88'
+    // UI
+    scoreText = this.add.text(20, 20, "REVENUE: $0.00", {
+        font: "bold 24px Courier",
+        fill: "#00ff88"
     });
 
-    stageLabel = this.add.text(20, 55, 'STAGE 1: 정석 수련', {
-        font: '14px Courier',
-        fill: '#aaa'
+    stageLabel = this.add.text(20, 55, "STAGE 1: 정석 수련", {
+        font: "14px Courier",
+        fill: "#aaa"
     });
 
     dialogBox = this.add.rectangle(300, 530, 560, 100, 0x000000)
@@ -145,17 +149,18 @@ function create() {
         530,
         "박사님: '수련을 시작하게. 가까이 와서 [Space]를 누르게.'",
         {
-            font: '14px Courier',
-            fill: '#fff',
-            align: 'center',
+            font: "14px Courier",
+            fill: "#ffffff",
+            align: "center",
             wordWrap: { width: 500 }
         }
     ).setOrigin(0.5);
 
+    // 입력
     cursors = this.input.keyboard.createCursorKeys();
     spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
-    console.log('create 완료');
+    console.log("create 완료");
 }
 
 function update() {
@@ -165,16 +170,16 @@ function update() {
 
     if (cursors.left.isDown) {
         player.setVelocityX(-160);
-        player.anims.play('left', true);
+        player.anims.play("left", true);
     } else if (cursors.right.isDown) {
         player.setVelocityX(160);
-        player.anims.play('right', true);
+        player.anims.play("right", true);
     } else if (cursors.up.isDown) {
         player.setVelocityY(-160);
-        player.anims.play('up', true);
+        player.anims.play("up", true);
     } else if (cursors.down.isDown) {
         player.setVelocityY(160);
-        player.anims.play('down', true);
+        player.anims.play("down", true);
     } else {
         player.anims.stop();
     }
@@ -186,6 +191,7 @@ function update() {
 
 function checkInteraction() {
     const scene = game.scene.scenes[0];
+
     const distMaster = Phaser.Math.Distance.Between(player.x, player.y, master.x, master.y);
     const distMonster = Phaser.Math.Distance.Between(player.x, player.y, monster.x, monster.y);
 
@@ -198,11 +204,11 @@ function checkInteraction() {
         scene.time.delayedCall(2500, () => {
             stage = 3;
             stageLabel.setText("STAGE 3: 마켓 데이터 룸");
-            bg.setTexture('bg_dataroom');
+            bg.setTexture("bg_dataroom");
             monster.setPosition(1000, 1000);
 
             itemSprite
-                .setTexture('item_goggles')
+                .setTexture("item_goggles")
                 .setPosition(player.x, player.y - 50)
                 .setVisible(true)
                 .setAlpha(1);
@@ -212,9 +218,7 @@ function checkInteraction() {
                 y: player.y - 80,
                 alpha: 0,
                 duration: 2000,
-                onComplete: () => {
-                    itemSprite.setVisible(false);
-                }
+                onComplete: () => itemSprite.setVisible(false)
             });
 
             updateDialog("박사님: '보았는가? 데이터 안경을 끼고 진짜 O, X를 구분하게.'");
@@ -245,7 +249,7 @@ function runStageDialogue() {
             score += 10;
             if (score >= 50) {
                 stage = 4;
-                bg.setTexture('bg_construction');
+                bg.setTexture("bg_construction");
                 stageLabel.setText("STAGE 4: 마트 설계 (마케터 전직)");
             }
             break;
@@ -264,7 +268,7 @@ function runStageDialogue() {
             score += 1000;
             if (score >= 3000) {
                 stage = 6;
-                bg.setTexture('bg_engine');
+                bg.setTexture("bg_engine");
                 stageLabel.setText("STAGE 6: 시스템 무한동력");
             }
             break;
@@ -274,11 +278,11 @@ function runStageDialogue() {
             score += 5000;
             if (score >= 10000) {
                 stage = 7;
-                bg.setTexture('bg_meadow');
+                bg.setTexture("bg_meadow");
                 stageLabel.setText("STAGE 7: 공간적 자유");
 
                 itemSprite
-                    .setTexture('item_stamp')
+                    .setTexture("item_stamp")
                     .setPosition(player.x, player.y - 50)
                     .setVisible(true)
                     .setAlpha(1);
@@ -288,9 +292,7 @@ function runStageDialogue() {
                     y: player.y - 80,
                     alpha: 0,
                     duration: 2000,
-                    onComplete: () => {
-                        itemSprite.setVisible(false);
-                    }
+                    onComplete: () => itemSprite.setVisible(false)
                 });
             }
             break;
@@ -301,7 +303,7 @@ function runStageDialogue() {
             break;
     }
 
-    scoreText.setText('REVENUE: $' + score.toFixed(2));
+    scoreText.setText("REVENUE: $" + score.toFixed(2));
 }
 
 function updateDialog(txt) {
