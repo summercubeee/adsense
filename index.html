@@ -21,7 +21,6 @@
     #start-screen p{font-size:14px;color:#aaa;text-align:center;max-width:360px;line-height:1.7;}
     #start-btn{background:#00ff99;color:#0a0a0f;border:none;border-radius:6px;padding:12px 36px;font-size:16px;font-weight:700;cursor:pointer;font-family:'Satoshi',sans-serif;transition:transform .15s;}
     #start-btn:hover{transform:scale(1.05);}
-    #fps{position:absolute;bottom:8px;right:8px;font:11px monospace;color:#444;pointer-events:none;}
   </style>
 </head>
 <body>
@@ -32,45 +31,85 @@
       <div id="revenue">REVENUE: $0.00</div>
       <div id="stage-label">STAGE 1: 낚싯대 던지기</div>
     </div>
-    <div id="controls-hint">
-      방향키: 이동<br>
-      SPACE: 상호작용
-    </div>
+    <div id="controls-hint">방향키: 이동<br>SPACE: 대화 / 실행</div>
     <div id="dialog-box">
-      <div id="dialog-text">박사님: '무작정 쓰지 마라. [Space]를 눌러 낚싯대부터 던져보게.'</div>
+      <div id="dialog-text">박사님에게 다가가서 [Space]로 조언을 구하세요.</div>
     </div>
-    <div id="fps"></div>
   </div>
   <div id="start-screen">
     <h1>본질센스 RPG<br>가짜 노력의 종말</h1>
-    <p>데이터와 본질로 성장하는 마케터의 여정.<br>될 만한 놈을 찾아 낚싯대를 던지고 승리하라.</p>
+    <p>박사님의 말만 듣는다고 돈이 벌리지 않습니다.<br>직접 행동(Space)하여 수익을 창출하십시오.</p>
     <button id="start-btn">▶ 게임 시작</button>
   </div>
 </div>
 
 <script>
-// ── 상수 ──────────────────────────────────────────
+// ── 상수 및 캔버스 ──────────────────────────────────────────
 const W = 600, H = 600;
 const SPEED = 160;
 const INTERACT_DIST = 90;
-
-// ── 캔버스 ────────────────────────────────────────
 const canvas = document.getElementById('c');
-const ctx    = canvas.getContext('2d');
+const ctx = canvas.getContext('2d');
 ctx.imageSmoothingEnabled = false;
+
+// ── 에셋 로더 (안전 모드 적용) ───────────────────────────────────
+const images = {};
+const assetList = {
+  player: 'player.png.jpg',
+  master: 'master.png.jpg',
+  monster: 'enemy_slime.png.jpg',
+  bg_fishing: 'bg_fishing.png.jpg',
+  bg_dataroom: 'bg_dataroom.png.jpg',
+  bg_construction: 'bg_construction.png.jpg',
+  bg_engine: 'bg_engine.png.jpg',
+  bg_meadow: 'bg_meadow.png.jpg',
+  item_goggles: 'item_goggles.png.jpg',
+  item_stamp: 'item_stamp.png.jpg'
+};
+
+let assetsLoaded = 0;
+const totalAssets = Object.keys(assetList).length;
+
+for(const [key, src] of Object.entries(assetList)) {
+  const img = new Image();
+  img.onload = () => { assetsLoaded++; };
+  img.src = src;
+  images[key] = img;
+}
 
 // ── 게임 상태 ─────────────────────────────────────
 const state = {
-  phase: 'start', // start | play | end
+  phase: 'start',
   stage: 1,
   score: 0,
-  player: { x: 300, y: 420, dir: 0, frame: 0, frameTimer: 0 },
-  master: { x: 300, y: 140 },
-  monster: { x: -200, y: -200, alive: true, shake: 0 },
-  item: { x: 0, y: 0, visible: false, alpha: 0, vy: 0, tex: 'goggles' },
-  bgColor: '#1a2a3a',
-  bgDecor: 'fishing',
+  player: { x: 300, y: 450, w:40, h:40 },
+  master: { x: 300, y: 150, w:50, h:70 },
+  monster: { x: -200, y: -200, alive: false, shake: 0 },
+  item: { x: 0, y: 0, visible: false, alpha: 0, vy: 0, img: null },
+  bgDecor: 'bg_fishing',
   camShake: 0,
+};
+
+// ── 액션 타겟 (플레이어가 상호작용해야 할 위치) ───
+const TARGETS = {
+  1: { x: 300, y: 350, name: '낚시터', hint: '[Space] 낚싯대 던지기' },
+  2: { x: -100, y: -100, name: '몬스터', hint: '[Space] 대형 키워드와 대결' }, // 몬스터가 타겟이 됨
+  3: { x: 150, y: 250, name: '데이터 단말기', hint: '[Space] 시장 데이터 확인' },
+  4: { x: 450, y: 300, name: '건설 도면', hint: '[Space] 종량제 입구 설계' },
+  5: { x: 300, y: 300, name: '메인 엔진', hint: '[Space] 광고 가동 (시간 복사)' },
+  6: { x: 300, y: 350, name: 'CPA 포탑', hint: '[Space] 클릭 유도 설계' },
+  7: { x: 450, y: 400, name: '로그아웃', hint: '[Space] 프리셀 확인 및 안식' },
+};
+
+// ── 스테이지별 박사님 대사 ───
+const MASTER_DIALOGS = {
+  1: "박사님: '내 말만 듣는다고 돈이 벌리지 않네. 저기 물가(초록색 원)로 가서 직접 낚싯대를 던져보게.'",
+  2: "박사님: '대형 키워드의 함정이다! 저 슬라임에게 부딪혀서 네 노가다가 얼마나 무력한지 확인해보게.'",
+  3: "박사님: '데이터 룸이네. 좌측의 단말기에서 가볍게 글을 써서 시장의 반응(Pretotype)을 확인하게.'",
+  4: "박사님: '우측의 건설 도면을 보게. 이제 수단과 방법을 가리지 않고 트래픽을 몰아넣어라!'",
+  5: "박사님: '중앙의 엔진을 가동하게. [고유가] 대신 [전쟁 지원금]! 틈새로 연금을 구축하라.'",
+  6: "박사님: '잘 쓴 글의 본질은 광고 클릭이네. 중앙의 포탑을 가동해 클릭 동선을 완성하게.'",
+  7: "박사님: '훌륭하네. 우측에서 O/X 도장을 찍어 최종 확인을 하고, 이제 노트북을 덮게나.'"
 };
 
 // ── 입력 ──────────────────────────────────────────
@@ -82,225 +121,7 @@ document.addEventListener('keydown', e => {
 });
 document.addEventListener('keyup', e => { Input.keys[e.code] = false; });
 
-// ── 스테이지 배경 팔레트 ──────────────────────────
-const bgPalettes = {
-  fishing:      { sky: '#0d1b2a', ground: '#1a3a2a', accent: '#1e4d6b' },
-  dataroom:     { sky: '#0a0f1a', ground: '#0f1f2f', accent: '#1b2f4d' },
-  construction: { sky: '#2a1a0a', ground: '#3a2a1a', accent: '#5c3b1e' },
-  engine:       { sky: '#0f0f18', ground: '#181830', accent: '#2a2a50' },
-  meadow:       { sky: '#1a3020', ground: '#2a4a2a', accent: '#3a6040' },
-};
-
-// ── 그리기 유틸 ───────────────────────────────────
-function drawRect(x,y,w,h,col,alpha=1){
-  ctx.globalAlpha=alpha; ctx.fillStyle=col;
-  ctx.fillRect(x,y,w,h); ctx.globalAlpha=1;
-}
-
-function drawRoundRect(x,y,w,h,r,col,alpha=1){
-  ctx.globalAlpha=alpha; ctx.fillStyle=col;
-  ctx.beginPath(); ctx.roundRect(x,y,w,h,r); ctx.fill(); ctx.globalAlpha=1;
-}
-
-// ── 배경 그리기 ───────────────────────────────────
-function drawBackground(){
-  const p = bgPalettes[state.bgDecor] || bgPalettes.fishing;
-  // 하늘
-  drawRect(0,0,W,H*0.55,p.sky);
-  // 지평선 그라데이션
-  const grad = ctx.createLinearGradient(0,H*0.45,0,H*0.65);
-  grad.addColorStop(0,p.accent); grad.addColorStop(1,p.ground);
-  ctx.fillStyle=grad; ctx.fillRect(0,H*0.45,W,H*0.2);
-  // 땅
-  drawRect(0,H*0.62,W,H*0.38,p.ground);
-
-  // 배경 장식 (스테이지별)
-  drawBgDecor(p);
-}
-
-function drawBgDecor(p){
-  const d = state.bgDecor;
-  ctx.save();
-  if(d==='fishing'){
-    // 호수
-    ctx.fillStyle='#0d3350'; ctx.beginPath();
-    ctx.ellipse(300,320,220,50,0,0,Math.PI*2); ctx.fill();
-    // 낚시 수면 반짝임
-    ctx.strokeStyle='#3a8fbf44'; ctx.lineWidth=1;
-    for(let i=0;i<5;i++){
-      ctx.beginPath(); ctx.moveTo(170+i*32,315); ctx.lineTo(190+i*32,315); ctx.stroke();
-    }
-  }else if(d==='dataroom'){
-    // 서버랙
-    for(let i=0;i<4;i++){
-      drawRoundRect(50+i*120,180,70,160,4,'#111a2a');
-      for(let j=0;j<6;j++){
-        const on=Math.random()>.5;
-        ctx.fillStyle=on?'#00ff88':'#1a3a2a';
-        ctx.fillRect(58+i*120,192+j*22,8,6);
-      }
-    }
-  }else if(d==='construction'){
-    // 빌딩 실루엣
-    const bld=[[50,200,80,250],[160,150,60,310],[280,180,90,280],[420,120,70,340],[530,200,50,260]];
-    bld.forEach(([x,y,w,h])=>{
-      ctx.fillStyle='#1a0f00'; ctx.fillRect(x,y,w,h);
-      // 창문
-      ctx.fillStyle='#ffcc6633';
-      for(let r=0;r<4;r++) for(let c=0;c<2;c++) ctx.fillRect(x+8+c*18,y+12+r*30,10,12);
-    });
-  }else if(d==='engine'){
-    // 기어 / 회로
-    ctx.strokeStyle='#3a3a6a'; ctx.lineWidth=1.5;
-    for(let i=0;i<5;i++){
-      ctx.beginPath(); ctx.moveTo(i*130,0); ctx.lineTo(i*130,H); ctx.stroke();
-    }
-    for(let j=0;j<5;j++){
-      ctx.beginPath(); ctx.moveTo(0,j*130); ctx.lineTo(W,j*130); ctx.stroke();
-    }
-    // 기어 원
-    [[150,200],[400,280],[260,350]].forEach(([cx,cy])=>{
-      ctx.strokeStyle='#5050aa55'; ctx.lineWidth=2;
-      ctx.beginPath(); ctx.arc(cx,cy,40,0,Math.PI*2); ctx.stroke();
-      ctx.beginPath(); ctx.arc(cx,cy,20,0,Math.PI*2); ctx.stroke();
-    });
-  }else if(d==='meadow'){
-    // 풀밭 점
-    ctx.fillStyle='#3a8040';
-    for(let i=0;i<30;i++){
-      const gx=80+i*17, gy=H*0.6+Math.sin(i)*6;
-      ctx.fillRect(gx,gy,3,10+Math.abs(Math.sin(i*2))*8);
-    }
-    // 태양
-    ctx.fillStyle='#ffdd44aa';
-    ctx.beginPath(); ctx.arc(480,80,35,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle='#ffcc2244';
-    ctx.beginPath(); ctx.arc(480,80,50,0,Math.PI*2); ctx.fill();
-  }
-  ctx.restore();
-}
-
-// ── 플레이어 픽셀 캐릭터 ──────────────────────────
-const PLAYER_COLORS = {
-  hair:'#4a3000', skin:'#f5c3a0', shirt:'#3a6fd8', pants:'#1a2d5a',
-  shoes:'#2a1a00', eye:'#1a1a2a', white:'#ffffff', shadow:'#00000044'
-};
-
-function drawPixelChar(cx,cy,dir,frame,isPlayer){
-  const colors = isPlayer ? PLAYER_COLORS : {
-    hair:'#6a00aa', skin:'#f5c3a0', shirt:'#8800cc', pants:'#440066',
-    shoes:'#1a0020', eye:'#ffffff', white:'#ffffff', shadow:'#00000044'
-  };
-  const c=colors;
-
-  // 그림자
-  ctx.fillStyle=c.shadow; ctx.beginPath();
-  ctx.ellipse(cx,cy+12,14,4,0,0,Math.PI*2); ctx.fill();
-
-  ctx.save();
-  // 좌우 반전
-  if(dir===1){ ctx.translate(cx,cy); ctx.scale(-1,1); ctx.translate(-cx,-cy); }
-
-  // 걷기 애니메이션 (발, 팔)
-  const legSwing = Math.sin(frame*Math.PI/2)*3;
-  const armSwing = Math.sin(frame*Math.PI/2)*4;
-
-  ctx.fillStyle=c.shoes; ctx.fillRect(cx-6,cy+4+legSwing,6,4); // 왼발
-  ctx.fillStyle=c.shoes; ctx.fillRect(cx+1,cy+4-legSwing,6,4); // 오른발
-  ctx.fillStyle=c.pants; ctx.fillRect(cx-6,cy-4,6,8); ctx.fillRect(cx+1,cy-4,6,8);
-  ctx.fillStyle=c.shirt; ctx.fillRect(cx-8,cy-20,16,18);
-  ctx.fillRect(cx-12,cy-18+armSwing,4,12); // 왼팔
-  ctx.fillRect(cx+8,cy-18-armSwing,4,12);  // 오른팔
-  ctx.fillStyle=c.skin;
-  ctx.fillRect(cx-12,cy-6+armSwing,4,4);
-  ctx.fillRect(cx+8,cy-6-armSwing,4,4);
-  ctx.fillRect(cx-8,cy-36,16,16); // 얼굴
-  ctx.fillStyle=c.hair; ctx.fillRect(cx-8,cy-36,16,5);
-  ctx.fillRect(cx-10,cy-36,2,10); ctx.fillRect(cx+8,cy-36,2,8);
-  ctx.fillStyle=c.eye; ctx.fillRect(cx-4,cy-28,3,3); ctx.fillRect(cx+2,cy-28,3,3);
-
-  if(isPlayer){
-    ctx.fillStyle=c.white; ctx.fillRect(cx-3,cy-29,1,1); ctx.fillRect(cx+3,cy-29,1,1);
-  }
-
-  ctx.restore();
-}
-
-// ── 마스터 NPC ────────────────────────────────────
-function drawMaster(){
-  const m=state.master;
-  drawPixelChar(m.x,m.y,0,0,false);
-  ctx.fillStyle='rgba(0,0,0,.6)'; ctx.beginPath();
-  ctx.roundRect(m.x-32,m.y-60,64,18,4); ctx.fill();
-  ctx.fillStyle='#ffcc00'; ctx.font='bold 11px Satoshi,sans-serif';
-  ctx.textAlign='center'; ctx.fillText('MASTER',m.x,m.y-47);
-
-  const dist = Math.hypot(state.player.x-m.x, state.player.y-m.y);
-  if(dist<120){
-    ctx.fillStyle='rgba(0,255,153,.15)'; ctx.beginPath();
-    ctx.ellipse(m.x,m.y+12,20,6,0,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle='#00ff99'; ctx.font='11px Satoshi,sans-serif';
-    ctx.textAlign='center'; ctx.fillText('[Space]',m.x,m.y-65);
-  }
-}
-
-// ── 대형 키워드 몬스터 ─────────────────────────────────
-function drawMonster(){
-  const mon=state.monster;
-  if(!mon.alive || mon.x<0) return;
-
-  const t=Date.now()/500;
-  const bx=mon.x+Math.sin(mon.shake*10)*mon.shake*8;
-  const by=mon.y+Math.sin(t)*4; 
-
-  ctx.fillStyle='#00000033'; ctx.beginPath();
-  ctx.ellipse(bx,by+28,22,6,0,0,Math.PI*2); ctx.fill();
-
-  ctx.fillStyle='#cc4444'; ctx.beginPath();
-  ctx.ellipse(bx,by,24,22,0,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle='#ee8888'; ctx.beginPath();
-  ctx.ellipse(bx-6,by-8,8,6,-.3,0,Math.PI*2); ctx.fill();
-  
-  ctx.fillStyle='#1a1a1a';
-  ctx.beginPath(); ctx.arc(bx-8,by-4,4,0,Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.arc(bx+8,by-4,4,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle='#ffffff';
-  ctx.fillRect(bx-9,by-6,2,2); ctx.fillRect(bx+7,by-6,2,2);
-  ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=2; ctx.beginPath();
-  ctx.arc(bx,by+6,8,0.1,Math.PI-.1); ctx.stroke();
-
-  // 대형 키워드 타이틀
-  ctx.fillStyle='#ff4466'; ctx.font='bold 11px Satoshi,sans-serif';
-  ctx.textAlign='center'; ctx.fillText('조회수 100만',bx,by-30);
-
-  const dist=Math.hypot(state.player.x-mon.x, state.player.y-mon.y);
-  if(dist<140){
-    ctx.fillText('[Space] 경쟁!',bx,by-44);
-  }
-}
-
-// ── 아이템 파티클 ─────────────────────────────────
-function drawItem(){
-  const it=state.item;
-  if(!it.visible) return;
-  ctx.save();
-  ctx.globalAlpha=it.alpha;
-  ctx.textAlign='center'; ctx.font='28px serif';
-  const emoji = it.tex==='goggles' ? '📊' : '📈';
-  ctx.fillText(emoji, it.x, it.y);
-  ctx.strokeStyle='#ffdd00'; ctx.lineWidth=2; ctx.globalAlpha=it.alpha*0.5;
-  ctx.beginPath(); ctx.arc(it.x,it.y-10,(1-it.alpha)*40+5,0,Math.PI*2); ctx.stroke();
-  ctx.restore();
-}
-
-let flashAlpha=0;
-function drawFlash(){
-  if(flashAlpha<=0) return;
-  drawRect(0,0,W,H,'#00ff99',flashAlpha);
-  flashAlpha=Math.max(0,flashAlpha-0.03);
-}
-
-// ── 메인 렌더 ─────────────────────────────────────
+// ── 렌더링 ─────────────────────────────────────
 function render(){
   ctx.clearRect(0,0,W,H);
   if(state.phase==='start') return;
@@ -310,203 +131,40 @@ function render(){
   ctx.save();
   if(state.camShake>0){ ctx.translate(sx,sy); state.camShake=Math.max(0,state.camShake-0.05); }
 
-  drawBackground();
-  drawMaster();
-  drawMonster();
-  
-  const pl=state.player;
-  drawPixelChar(pl.x,pl.y,pl.dir,pl.frame,true);
-
-  drawItem();
-  drawFlash();
-  ctx.restore();
-}
-
-// ── 업데이트 ──────────────────────────────────────
-let lastTime=0;
-function update(dt){
-  if(state.phase!=='play') return;
-
-  const pl=state.player;
-  let moved=false;
-
-  if(Input.keys['ArrowLeft']||Input.keys['KeyA']){ pl.x=Math.max(20,pl.x-SPEED*dt); pl.dir=1; moved=true; }
-  else if(Input.keys['ArrowRight']||Input.keys['KeyD']){ pl.x=Math.min(W-20,pl.x+SPEED*dt); pl.dir=0; moved=true; }
-  if(Input.keys['ArrowUp']||Input.keys['KeyW']){ pl.y=Math.max(100,pl.y-SPEED*dt); moved=true; }
-  else if(Input.keys['ArrowDown']||Input.keys['KeyS']){ pl.y=Math.min(520,pl.y+SPEED*dt); moved=true; }
-
-  if(moved){
-    pl.frameTimer+=dt;
-    if(pl.frameTimer>0.12){ pl.frame=(pl.frame+1)%4; pl.frameTimer=0; }
-  } else { pl.frame=0; pl.frameTimer=0; }
-
-  if(Input.justPressed['Space']) interact();
-
-  const it=state.item;
-  if(it.visible){
-    it.y+=it.vy*dt;
-    it.alpha=Math.max(0,it.alpha-0.4*dt);
-    if(it.alpha<=0) it.visible=false;
+  // 1. 배경 이미지
+  const bgImg = images[state.bgDecor];
+  if(bgImg && bgImg.complete) {
+    ctx.globalAlpha = 0.6;
+    ctx.drawImage(bgImg, 0, 0, W, H);
+    ctx.globalAlpha = 1.0;
   }
 
-  if(state.monster.shake>0) state.monster.shake=Math.max(0,state.monster.shake-2*dt);
-  Input.justPressed={};
-}
-
-// ── 상호작용 및 대사 로직 ──────────────────────────────────────
-function interact(){
-  const pl=state.player;
-  const m=state.master;
-  const mon=state.monster;
-
-  const dMaster=Math.hypot(pl.x-m.x,pl.y-m.y);
-  const dMonster=Math.hypot(pl.x-mon.x,pl.y-mon.y);
-
-  if(dMaster<INTERACT_DIST){
-    runStageDialogue();
-  } else if(state.stage===2 && mon.alive && dMonster<INTERACT_DIST+30){
-    setDialog("대형 키워드 몬스터: '난 [신청방법] 같은 대형 키워드다! 넌 며칠 만에 밀려날 것이다!'");
-    state.monster.shake=1;
-    state.camShake=1;
-    flashAlpha=0.15;
-    setTimeout(()=>{
-      state.stage=3;
-      state.monster.x=-200; state.monster.alive=false;
-      state.bgDecor='dataroom';
-      updateStageLabel();
-      spawnItem('goggles',pl.x,pl.y-30);
-      setDialog("박사님: '함정이다! 작게 테스트(Pretotype)하여 진짜 반응이 있는 데이터를 확인하라.'");
-      flashAlpha=0.3;
-    },2500);
+  // 2. 액션 타겟 표시 (박동하는 초록색 원형)
+  const target = TARGETS[state.stage];
+  if(target && state.stage !== 2) { // 스테이지 2는 몬스터가 타겟
+    const pulse = Math.abs(Math.sin(Date.now()/300));
+    ctx.beginPath();
+    ctx.arc(target.x, target.y, 25 + pulse*10, 0, Math.PI*2);
+    ctx.fillStyle = `rgba(0, 255, 153, ${0.2 + pulse*0.3})`;
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#00ff99';
+    ctx.stroke();
+    
+    // 근처에 가면 힌트 텍스트
+    const dTarget = Math.hypot(state.player.x - target.x, state.player.y - target.y);
+    if(dTarget < 80) {
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 12px Satoshi';
+      ctx.textAlign = 'center';
+      ctx.fillText(target.hint, target.x, target.y - 45);
+    }
   }
-}
 
-function runStageDialogue(){
-  const pl=state.player;
-  switch(state.stage){
-    case 1:
-      setDialog("박사님: '안 될 키워드에 힘 빼지 마라. 될 만한 놈을 찾아 낚싯대를 먼저 던져보게.'");
-      state.score=+(state.score+0.01).toFixed(2);
-      if(state.score>=0.05){
-        state.stage=2;
-        state.monster.x=150; state.monster.y=300; state.monster.alive=true;
-        updateStageLabel();
-        setDialog("박사님: '대형 키워드가 나타났다! [Space]로 부딪혀 그 한계를 확인하게.'");
-        flashAlpha=0.2;
-      }
-      break;
-    case 2:
-      setDialog("박사님: '대형 키워드의 함정이다. 저 몬스터에게 부딪혀 현실을 직시하게.'");
-      break;
-    case 3:
-      setDialog("박사님: '가볍게 글을 써서 시장의 반응(클릭)을 엿보게. 상상 대신 데이터를 믿어라!'");
-      state.score=+(state.score+10).toFixed(2);
-      if(state.score>=50){
-        state.stage=4;
-        state.bgDecor='construction';
-        updateStageLabel();
-        flashAlpha=0.25;
-      }
-      break;
-    case 4:
-      setDialog("박사님: '되는 놈이란 확신이 들었는가? 수단과 방법을 가리지 않고 트래픽을 몰아넣어라!'");
-      state.score=+(state.score+100).toFixed(2);
-      if(state.score>=500){
-        state.stage=5;
-        updateStageLabel();
-        flashAlpha=0.2;
-      }
-      break;
-    case 5:
-      setDialog("박사님: '[고유가] 대신 [전쟁 지원금]! 틈새 키워드들이 4주 이상 버티며 연금을 만든다.'");
-      state.score=+(state.score+1000).toFixed(2);
-      if(state.score>=3000){
-        state.stage=6;
-        state.bgDecor='engine';
-        updateStageLabel();
-        flashAlpha=0.25;
-      }
-      break;
-    case 6:
-      setDialog("박사님: '잘 쓴 글의 본질은 정보량이 아니다. 오직 [광고 클릭]이 일어나는 글이다!'");
-      state.score=+(state.score+5000).toFixed(2);
-      if(state.score>=10000){
-        state.stage=7;
-        state.bgDecor='meadow';
-        updateStageLabel();
-        spawnItem('stamp',pl.x,pl.y-30);
-        flashAlpha=0.35;
-      }
-      break;
-    case 7:
-      setDialog("박사님: '작은 성공을 반복하며 계단식 성장을 이뤘다. 이제 진정한 수익 자동화다.'");
-      state.score=+(state.score+10000).toFixed(2);
-      setTimeout(()=>{
-        state.phase='end';
-        showEndScreen();
-      },3000);
-      break;
+  // 3. 박사님
+  const m = state.master;
+  if(images.master && images.master.complete) {
+    ctx.drawImage(images.master, m.x - m.w/2, m.y - m.h/2, m.w, m.h);
   }
-  updateRevenue();
-}
-
-function spawnItem(tex,x,y){ state.item={ x, y, visible:true, alpha:1, vy:-60, tex }; }
-
-// ── UI 업데이트 ───────────────────────────────────
-const stageNames = ['',
-  'STAGE 1: 낚싯대 던지기','STAGE 2: 대형 키워드의 함정',
-  'STAGE 3: 시장 반응 (Pretotype)','STAGE 4: 확신과 확장 (트래픽)',
-  'STAGE 5: 틈새 연금 구축','STAGE 6: 클릭의 본질',
-  'STAGE 7: 계단식 성장 완성'
-];
-
-function setDialog(txt){ document.getElementById('dialog-text').textContent=txt; }
-function updateRevenue(){ document.getElementById('revenue').textContent='REVENUE: $'+state.score.toLocaleString('en-US',{minimumFractionDigits:2}); }
-function updateStageLabel(){ document.getElementById('stage-label').textContent=stageNames[state.stage]||''; }
-
-// ── 엔딩 화면 ─────────────────────────────────────
-function showEndScreen(){
-  const el=document.createElement('div');
-  el.id='end-screen';
-  el.style.cssText=`position:absolute;inset:0;background:rgba(0,0,0,.93);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;pointer-events:auto;`;
-  el.innerHTML=`
-    <div style="font-size:48px;">📈</div>
-    <h1 style="font-size:26px;font-weight:700;color:#ffcc00;text-align:center;">안정적 연금형 수익 달성!</h1>
-    <p style="color:#aaa;font-size:14px;text-align:center;line-height:1.8;">
-      최종 수익: <strong style="color:#00ff99">$${state.score.toLocaleString()}</strong><br>
-      상상 대신 데이터를 믿은 자, 진정한 성장을 이뤄냈습니다.
-    </p>
-    <button onclick="location.reload()" style="background:#00ff99;color:#0a0a0f;border:none;border-radius:6px;padding:10px 28px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Satoshi',sans-serif;">다시 플레이</button>
-  `;
-  document.getElementById('wrap').appendChild(el);
-}
-
-// ── 게임 루프 등 유틸 ────────────────────────────────
-let _fpsF=0,_fpsL=performance.now(),_fpsVal=0;
-function updateFPS(now){
-  _fpsF++;
-  if(now-_fpsL>=1000){
-    _fpsVal=Math.round(_fpsF*1000/(now-_fpsL));
-    _fpsF=0; _fpsL=now;
-    document.getElementById('fps').textContent=`FPS:${_fpsVal}`;
-  }
-}
-
-function loop(now){
-  const dt=Math.min((now-lastTime)/1000,0.05);
-  lastTime=now;
-  update(dt);
-  render();
-  updateFPS(now);
-  requestAnimationFrame(loop);
-}
-
-document.getElementById('start-btn').addEventListener('click',()=>{
-  document.getElementById('start-screen').remove();
-  state.phase='play';
-  lastTime=performance.now();
-  requestAnimationFrame(loop);
-});
-</script>
-</body>
-</html>
+  ctx.fillStyle='#ffcc00'; ctx.font='bold 12px Satoshi'; ctx.textAlign='center';
+  ctx.fillText
