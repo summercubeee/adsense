@@ -2,59 +2,59 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>Ad-Quest: The Core</title>
+    <title>본질센스 RPG: 가짜 노력의 종말</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
     <style>
         body { margin: 0; background: #050505; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
-        canvas { border: 6px solid #222; box-shadow: 0 0 30px rgba(0,0,0,1); image-rendering: pixelated; }
+        canvas { border: 4px solid #333; image-rendering: pixelated; }
     </style>
 </head>
 <body>
     <script>
         const config = {
             type: Phaser.AUTO,
-            width: 500,
-            height: 500,
-            backgroundColor: '#0a0a0a',
+            width: 600,
+            height: 600,
+            pixelArt: true,
             physics: { default: 'arcade', arcade: { debug: false } },
             scene: { preload: preload, create: create, update: update }
         };
 
         const game = new Phaser.Game(config);
-        let player, master, cursors, score = 0, scoreText, stageText, dialogBox, dialogText;
-        let currentStage = 1;
+        let player, master, monster, cursors, score = 0, stage = 1;
+        let scoreText, infoText, dialogBox, dialogText;
 
-        function preload() {}
+        function preload() {
+            // 이미지 파일이 준비되면 아래 주석을 풀고 연결하세요.
+            // this.load.image('player', 'player.png');
+            // this.load.image('master', 'master.png');
+            // this.load.image('monster', 'monster.png');
+            // this.load.image('bg', 'bg_room.png');
+        }
 
         function create() {
-            // 1. 짤 특유의 어두운 바닥 타일 (픽셀 느낌)
-            for (let i = 0; i < 10; i++) {
-                for (let j = 0; j < 10; j++) {
-                    let tile = this.add.rectangle(i * 50, j * 50, 48, 48, 0x111111).setOrigin(0);
-                    if ((i + j) % 2 === 0) tile.setFillStyle(0x151515);
-                }
-            }
+            // 배경 및 기본 설정
+            this.add.grid(300, 300, 600, 600, 50, 50, 0x1a1a1a).setAlpha(0.5);
 
-            // 2. 박사님 (짤처럼 위엄 있는 보스 느낌)
-            master = this.add.container(250, 120);
-            let masterBody = this.add.rectangle(0, 0, 40, 60, 0xccaa00).setStrokeStyle(2, 0xffffff);
-            let masterEye = this.add.rectangle(0, -10, 30, 5, 0x000000); // 박사님의 날카로운 눈매
-            master.add([masterBody, masterEye]);
-            this.add.text(250, 70, 'MASTER AD-SENSE', { font: 'bold 16px Courier', fill: '#ccaa00' }).setOrigin(0.5);
+            // 박사님 (스승)
+            master = this.add.rectangle(300, 100, 40, 60, 0xffcc00).setStrokeStyle(2, 0xffffff);
+            this.add.text(300, 60, '박사님', { fontSize: '14px', fill: '#ffcc00' }).setOrigin(0.5);
 
-            // 3. 주인공 (나)
-            player = this.physics.add.container(250, 400);
-            let playerBody = this.add.rectangle(0, 0, 30, 30, 0x00ff88).setStrokeStyle(2, 0xffffff);
-            player.add(playerBody);
-            player.setSize(30, 30);
+            // 주인공 (나)
+            player = this.physics.add.rectangle(300, 500, 30, 30, 0x00ff88);
+            
+            // 몬스터 (가짜 노력: 크고 못하는 것)
+            monster = this.physics.add.rectangle(1000, 1000, 80, 80, 0xff3333).setAlpha(0); // 처음엔 숨김
 
-            // 4. 상단 UI (세련된 마케터 스타일)
-            scoreText = this.add.text(20, 20, 'REVENUE: $0.00', { font: '18px Courier', fill: '#00ff88' });
-            stageText = this.add.text(20, 45, 'MISSION: 수련의 시작', { font: '12px Courier', fill: '#888' });
+            // UI
+            scoreText = this.add.text(20, 20, '수익: $0.00', { font: 'bold 20px Courier', fill: '#00ff88' });
+            infoText = this.add.text(20, 50, 'Stage 1: 정석 수련', { font: '14px Courier', fill: '#aaa' });
 
-            // 5. 하단 대화창 (짤의 레이아웃)
-            dialogBox = this.add.rectangle(250, 450, 460, 80, 0x000000).setAlpha(0.8).setStrokeStyle(2, 0x555555).setVisible(false);
-            dialogText = this.add.text(250, 450, '', { font: '14px Courier', fill: '#ffffff', align: 'center', wordWrap: { width: 400 } }).setOrigin(0.5).setVisible(false);
+            // 대화창
+            dialogBox = this.add.rectangle(300, 540, 560, 80, 0x000000).setAlpha(0.8).setStrokeStyle(2, 0x555555);
+            dialogText = this.add.text(300, 540, "박사님: '수련을 시작하자. 스페이스바를 눌러 질문해라.'", { 
+                font: '14px Courier', fill: '#fff', align: 'center', wordWrap: { width: 500 } 
+            }).setOrigin(0.5);
 
             cursors = this.input.keyboard.createCursorKeys();
         }
@@ -66,41 +66,66 @@
             if (cursors.up.isDown) player.body.setVelocityY(-200);
             else if (cursors.down.isDown) player.body.setVelocityY(200);
 
-            // 박사님 근처에 가면 자동 대화
-            let dist = Phaser.Math.Distance.Between(player.x, player.y, master.x, master.y);
+            if (Phaser.Input.Keyboard.JustDown(cursors.space)) {
+                handleStageLogic();
+            }
+        }
+
+        function handleStageLogic() {
+            const dist = Phaser.Math.Distance.Between(player.x, player.y, master.x, master.y);
+            const distMon = Phaser.Math.Distance.Between(player.x, player.y, monster.x, monster.y);
+
             if (dist < 80) {
-                showMasterMessage();
-            } else {
-                hideDialog();
+                switch(stage) {
+                    case 1:
+                        updateDialog("박사님: '글은 인격이다. 검색자가 원하는 정보를 정확히 적어라. (정석 포스팅 완료)'");
+                        score += 0.01;
+                        if (score >= 0.05) { stage = 2; spawnMonster(); }
+                        break;
+                    case 2:
+                        updateDialog("박사님: '저 몬스터는 네 안의 탐욕이다. 데이터 없이 100만 키워드에 덤비지 마라.'");
+                        break;
+                    case 3:
+                        updateDialog("박사님: '데이터 안경을 줬다. 이제 낚싯대를 던져 O인지 X인지 구분해라.'");
+                        break;
+                    case 4:
+                        updateDialog("박사님: '작가에서 마케터로 전직해라. 어디서 팔지 정하고 써라.'");
+                        break;
+                    case 5:
+                        updateDialog("박사님: '광고는 시간 복사 기술이다. 80원으로 데이터를 사라.'");
+                        break;
+                    case 6:
+                        updateDialog("박사님: '마트 시스템이 완성됐다. 종량제 입구로 손님을 모아라.'");
+                        break;
+                    case 7:
+                        updateDialog("박사님: 'Pre-sell! 먼저 팔아보고 되면 확장해라. 이제 로그아웃해라.'");
+                        score = 10000;
+                        infoText.setText("Stage 7: 공간적 자유 획득!");
+                        break;
+                }
             }
-        }
 
-        function showMasterMessage() {
-            dialogBox.setVisible(true);
-            dialogText.setVisible(true);
+            if (stage === 2 && distMon < 100) {
+                updateDialog("몬스터: '난 100만 키워드다! 데이터 없는 네 노가다는 내 HP를 깎을 수 없다!'");
+                // 가짜 노력의 허무함을 깨달아야 다음으로 넘어감
+                this.time.delayedCall(2000, () => {
+                    stage = 3;
+                    infoText.setText("Stage 3: 낚싯대 이론 (O/X)");
+                    updateDialog("박사님: '봤느냐? 0 곱하기 0은 0이다. 이제 데이터 안경을 써라.'");
+                });
+            }
             
-            if (currentStage === 1) {
-                dialogText.setText("박사님: '작가의 고집을 버려라. 클릭이 나지 않는 글은 죽은 글이다.' (Space 키로 수련)");
-                if (Phaser.Input.Keyboard.JustDown(cursors.space)) {
-                    score += 0.01;
-                    if (score >= 0.05) { currentStage = 2; stageText.setText("MISSION: 낚싯대 던지기"); }
-                }
-            } else if (currentStage === 2) {
-                dialogText.setText("박사님: '데이터를 믿어라. 낚싯대를 던져 O인지 X인지 확인해라.'");
-                if (Phaser.Input.Keyboard.JustDown(cursors.space)) {
-                    score += 50;
-                    if (score >= 500) { currentStage = 3; stageText.setText("MISSION: 마트 자동화"); }
-                }
-            } else {
-                dialogText.setText("박사님: '잘했다. 이제 시스템이 너를 자유케 하리라.'");
-                score += 1000;
-            }
-            scoreText.setText('REVENUE: $' + score.toFixed(2));
+            scoreText.setText('수익: $' + score.toFixed(2));
         }
 
-        function hideDialog() {
-            dialogBox.setVisible(false);
-            dialogText.setVisible(false);
+        function spawnMonster() {
+            monster.setPosition(150, 300).setAlpha(1);
+            infoText.setText("Stage 2: 가짜 노력(크고 못하는 것)의 습격");
+            updateDialog("박사님: '가짜 노력 몬스터가 나타났다! 직접 부딪혀보고 그 무력함을 깨달아라.'");
+        }
+
+        function updateDialog(txt) {
+            dialogText.setText(txt);
         }
     </script>
 </body>
