@@ -1,361 +1,780 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8"/>
-  <title>본질센스 RPG: 기술 · 만체리 · 사업화·고수익화 · 코어</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>본질센스 RPG</title>
   <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,700&display=swap" rel="stylesheet">
   <style>
-    *{box-sizing:border-box;margin:0;padding:0}
-    html,body{width:100%;height:100%}
-    body{
-      background:#0a0a0f;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      overflow:hidden;
-      font-family:'Satoshi',sans-serif;
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #0a0a0f;
+      font-family: 'Satoshi', sans-serif;
+      touch-action: none;
     }
-    #wrap{
-      position:relative;
-      width:600px;
-      height:600px;
-      box-shadow:0 0 50px rgba(0,255,153,0.15);
-      background:#000;
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
     }
-    canvas{display:block;image-rendering:pixelated;border-radius:4px}
-    /* UI 전체는 클릭 막지 않게 */
-    #ui{
-      position:absolute;
-      inset:0;
-      pointer-events:none;
+    #wrap {
+      position: relative;
+      width: min(600px, 100vw);
+      height: min(600px, 100vw);
+      background: #000;
+      box-shadow: 0 0 50px rgba(0,255,153,0.15);
+      flex-shrink: 0;
+      overflow: hidden;
     }
-    #hud{
-      position:absolute;
-      top:16px;
-      left:16px;
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      image-rendering: pixelated;
     }
-    #revenue{
-      font-size:26px;font-weight:700;color:#00ff99;
-      text-shadow:0 0 12px rgba(0,255,153,0.5);
-      font-variant-numeric:tabular-nums;letter-spacing:-0.5px;
+
+    /* UI는 클릭 방해 안 함 */
+    #ui {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 3;
     }
-    #stage-label{
-      font-size:14px;color:#cbd5e1;margin-top:6px;font-weight:700;letter-spacing:0.5px;
+    #revenue {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      font-size: clamp(18px, 4vw, 26px);
+      font-weight: 700;
+      color: #00ff99;
+      text-shadow: 0 0 12px rgba(0,255,153,0.45);
+      font-variant-numeric: tabular-nums;
     }
-    #meta-label{
-      margin-top:8px;font-size:12px;line-height:1.7;color:#94a3b8;
-      background:rgba(0,0,0,0.38);padding:8px 10px;border-radius:6px;
-      white-space:pre-line;
+    #dialog-box {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 14px;
+      padding: 12px 14px;
+      background: rgba(10,15,25,0.93);
+      border: 2px solid #00ff99;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.7);
     }
-    #dialog-box{
-      position:absolute;bottom:16px;left:16px;right:16px;
-      background:rgba(10,15,25,0.95);
-      border:2px solid #00ff99;border-radius:8px;padding:16px 20px;
-      box-shadow:0 10px 25px rgba(0,0,0,0.8);
+    #dialog-speaker {
+      font-size: 12px;
+      font-weight: 700;
+      color: #00ff99;
+      margin-bottom: 4px;
+      text-transform: uppercase;
     }
-    #dialog-speaker{
-      font-size:13px;color:#00ff99;font-weight:700;margin-bottom:6px;text-transform:uppercase;
+    #dialog-text {
+      font-size: 13px;
+      line-height: 1.5;
+      color: #f8fafc;
     }
-    #dialog-text{
-      font-size:15px;color:#f8fafc;line-height:1.6;font-weight:400;
+
+    #start-screen {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      background: rgba(5,10,15,0.97);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      pointer-events: auto;
     }
-    #controls-hint{
-      position:absolute;top:16px;right:16px;font-size:12px;color:#94a3b8;
-      text-align:right;line-height:1.8;background:rgba(0,0,0,0.5);
-      padding:8px 12px;border-radius:6px;
+    #start-screen h1 {
+      font-size: clamp(22px, 5vw, 30px);
+      color: #00ff99;
+      text-align: center;
+      line-height: 1.3;
     }
-    #fps{
-      position:absolute;bottom:12px;right:12px;font:11px monospace;color:#475569;pointer-events:none;
+    #start-screen p {
+      color: #64748b;
+      font-size: 13px;
+      line-height: 1.7;
+      text-align: center;
+      max-width: 440px;
+      padding: 0 16px;
     }
-    /* 스타트 화면은 클릭 가능하게 */
-    #start-screen{
-      position:absolute;
-      inset:0;
-      background:rgba(5,10,15,0.95);
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-      gap:20px;
-      z-index:10;
-      pointer-events:auto;
+    #start-btn {
+      border: none;
+      border-radius: 8px;
+      background: #00ff99;
+      color: #07110d;
+      padding: 13px 34px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      pointer-events: auto;
     }
-    #start-screen h1{
-      font-size:32px;font-weight:700;color:#00ff99;text-align:center;
-      line-height:1.3;text-shadow:0 0 24px rgba(0,255,153,0.4);
+
+    #touch-controls {
+      width: min(600px, 100vw);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      padding: 10px 18px 14px;
+      background: #0a0a0f;
+      flex-shrink: 0;
     }
-    #start-screen p{
-      font-size:15px;color:#94a3b8;text-align:center;max-width:460px;line-height:1.7;
+    #dpad {
+      position: relative;
+      width: 120px;
+      height: 120px;
+      flex-shrink: 0;
     }
-    #start-btn{
-      background:#00ff99;color:#050a0f;border:none;border-radius:6px;
-      padding:14px 40px;font-size:18px;font-weight:700;cursor:pointer;
-      font-family:'Satoshi',sans-serif;transition:all .2s;
-      box-shadow:0 4px 15px rgba(0,255,153,0.3);
-      pointer-events:auto;
+    .dpad-btn {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      border: 2px solid rgba(0,255,153,0.38);
+      background: rgba(0,255,153,0.14);
+      color: #00ff99;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      user-select: none;
+      -webkit-user-select: none;
     }
-    #start-btn:hover{
-      transform:translateY(-2px);
-      box-shadow:0 6px 20px rgba(0,255,153,0.5);
+    .dpad-btn:active,
+    #btn-action:active {
+      background: rgba(0,255,153,0.3);
+    }
+    #btn-up { top: 0; left: 40px; }
+    #btn-down { bottom: 0; left: 40px; }
+    #btn-left { left: 0; top: 40px; }
+    #btn-right { right: 0; top: 40px; }
+    #btn-center {
+      position: absolute;
+      top: 40px;
+      left: 40px;
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: rgba(0,255,153,0.05);
+      border: 1px solid rgba(0,255,153,0.08);
+    }
+    #btn-action {
+      width: 92px;
+      height: 92px;
+      border-radius: 50%;
+      border: 3px solid rgba(0,255,153,0.45);
+      background: rgba(0,255,153,0.14);
+      color: #00ff99;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 2px;
+      font-size: 11px;
+      font-weight: 700;
+      user-select: none;
+      -webkit-user-select: none;
+      flex-shrink: 0;
+    }
+
+    @media (max-width: 600px) {
+      #dialog-box { bottom: 10px; left: 10px; right: 10px; }
+      #dialog-text { font-size: 12px; }
+      #touch-controls { padding: 8px 12px 12px; }
     }
   </style>
 </head>
 <body>
-<div id="wrap">
-  <canvas id="c" width="600" height="600"></canvas>
+  <div id="wrap">
+    <canvas id="c" width="600" height="600"></canvas>
 
-  <div id="ui">
-    <div id="hud">
+    <div id="ui">
       <div id="revenue">REVENUE: $0.00</div>
-      <div id="stage-label">STAGE 1: 기술 - 뺑뺑이 · 전면 광고 · 소제목 밑 광고</div>
-      <div id="meta-label">수: 0 | 단가: $1.00 | 잠재 트래픽: 0 | 노출 가능성: 0 | 유입 사유: 0
-코어(Core): 0 | 근본 원리: 0 (가격×수 이해도)</div>
+      <div id="dialog-box">
+        <div id="dialog-speaker">시스템 알림</div>
+        <div id="dialog-text">박사님께 다가가 상호작용하면 시작됩니다.</div>
+      </div>
     </div>
 
-    <div id="controls-hint">
-      방향키: 이동<br>
-      SPACE: 상호작용
+    <div id="start-screen">
+      <h1>본질센스 RPG<br>기술 · 만체리 · 사업화·고수익화 · 코어</h1>
+      <p>기술 → 본질(만체리: 잠재 트래픽·노출 가능성·가격×수) → 사업화·고수익화(레버리지) → 코어</p>
+      <button id="start-btn">▶ 시스템 가동</button>
     </div>
-
-    <div id="dialog-box">
-      <div id="dialog-speaker">시스템 알림</div>
-      <div id="dialog-text">박사님께 다가가 SPACE를 눌러, 기술 → 만체리 → 사업화·고수익화(레버리지) → 코어 구조를 배우십시오.</div>
-    </div>
-
-    <div id="fps"></div>
   </div>
 
-  <div id="start-screen">
-    <h1>본질센스 RPG<br>기술 · 만체리 · 사업화·고수익화 · 코어</h1>
-    <p>
-      기술(뺑뺑이·전면 광고·소제목 밑 광고) → 본질(만체리: 잠재 트래픽·노출 가능성·유입 사유·가격×수) → 사업화·고수익화(다회성 트래픽·브랜딩·CPA·내 상품·레버리지) → 코어(내가 좋아하며 되는 사업)를 차례대로 체험합니다.
-    </p>
-    <button id="start-btn">▶ 시스템 가동</button>
+  <div id="touch-controls">
+    <div id="dpad">
+      <div class="dpad-btn" id="btn-up">▲</div>
+      <div class="dpad-btn" id="btn-down">▼</div>
+      <div class="dpad-btn" id="btn-left">◀</div>
+      <div class="dpad-btn" id="btn-right">▶</div>
+      <div id="btn-center"></div>
+    </div>
+    <div id="btn-action">
+      <span style="font-size:22px;">💬</span>
+      <span>상호작용</span>
+    </div>
   </div>
-</div>
 
-<script>
-const W=600,H=600,SPEED=180,INTERACT_DIST=72;
-const canvas=document.getElementById('c');
-const ctx=canvas.getContext('2d');
-ctx.imageSmoothingEnabled=false;
+  <script>
+    const W = 600, H = 600;
+    const SPEED = 180;
+    const INTERACT_DIST = 72;
 
-const state={
-  phase:'start',
-  stage:1,
-  score:0,
-  traffic:0,
-  cpc:1.0,
-  keywordPotential:0,
-  exposureScore:0,
-  clickAppeal:0,
-  core:0,
-  principle:0,
-  player:{x:300,y:470,dir:0,frame:0,frameTimer:0},
-  master:{x:300,y:120},
-  monster:{x:-200,y:-200,alive:false,shake:0,hits:0},
-  bgDecor:'construction',
-  camShake:0,
-  targets:[]
-};
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
 
-const Input={keys:{},justPressed:{}};
-document.addEventListener('keydown',e=>{
-  if(!Input.keys[e.code]) Input.justPressed[e.code]=true;
-  Input.keys[e.code]=true;
-});
-document.addEventListener('keyup',e=>{Input.keys[e.code]=false;});
+    const state = {
+      phase: 'start',
+      stage: 1,
+      score: 0,
+      traffic: 0,
+      cpc: 1.0,
+      keywordPotential: 0,
+      exposureScore: 0,
+      clickAppeal: 0,
+      core: 0,
+      principle: 0,
+      player: { x: 300, y: 470, dir: 0, frame: 0, frameTimer: 0 },
+      master: { x: 300, y: 130 },
+      bgDecor: 'construction',
+      camShake: 0,
+      targets: []
+    };
 
-const bgPalettes={
-  construction:{sky:'#2a1a0a',ground:'#3a2a1a',accent:'#5c3b1e'},
-  dataroom:{sky:'#0a0f1a',ground:'#0f1f2f',accent:'#1b2f4d'},
-  engine:{sky:'#0f0f18',ground:'#181830',accent:'#2a2a50'},
-  meadow:{sky:'#1a3020',ground:'#2a4a2a',accent:'#3a6040'}
-};
-function drawRect(x,y,w,h,col,a=1){ctx.globalAlpha=a;ctx.fillStyle=col;ctx.fillRect(x,y,w,h);ctx.globalAlpha=1;}
-function drawRoundRect(x,y,w,h,r,col,a=1){ctx.globalAlpha=a;ctx.fillStyle=col;ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill();ctx.globalAlpha=1;}
-function renderText(txt,x,y,size,col,align='center',bold=false){
-  ctx.fillStyle=col;ctx.textAlign=align;
-  ctx.font=`${bold?'bold ':''}${size}px Satoshi, sans-serif`;
-  ctx.fillText(txt,x,y);
-}
-function drawBackground(){
-  const p=bgPalettes[state.bgDecor]||bgPalettes.construction;
-  drawRect(0,0,W,H*0.55,p.sky);
-  const grad=ctx.createLinearGradient(0,H*0.45,0,H*0.65);
-  grad.addColorStop(0,p.accent);grad.addColorStop(1,p.ground);
-  ctx.fillStyle=grad;ctx.fillRect(0,H*0.45,W,H*0.2);
-  drawRect(0,H*0.62,W,H*0.38,p.ground);
-  drawBgDecor();
-}
-function drawBgDecor(){
-  const d=state.bgDecor;
-  ctx.save();
-  if(d==='construction'){
-    const bld=[[40,180,90,270],[160,130,70,330],[260,160,100,300],[400,100,80,360],[510,180,60,280]];
-    bld.forEach(([x,y,w,h])=>{
-      ctx.fillStyle='#1a0f00';ctx.fillRect(x,y,w,h);
-      ctx.fillStyle='#ffcc6633';
-      for(let r=0;r<5;r++)for(let c=0;c<2;c++)ctx.fillRect(x+10+c*20,y+15+r*35,12,14);
+    const Input = { keys: {}, justPressed: {} };
+
+    document.addEventListener('keydown', e => {
+      if (!Input.keys[e.code]) Input.justPressed[e.code] = true;
+      Input.keys[e.code] = true;
+      if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Space'].includes(e.code)) e.preventDefault();
     });
-  }else if(d==='dataroom'){
-    for(let i=0;i<4;i++){
-      drawRoundRect(60+i*130,160,80,180,4,'#111a2a');
-      for(let j=0;j<7;j++){
-        ctx.fillStyle=Math.random()>.4?'#22c55e':'#1a3a2a';
-        ctx.fillRect(70+i*130,175+j*24,10,8);
+
+    document.addEventListener('keyup', e => {
+      Input.keys[e.code] = false;
+    });
+
+    function bindHoldButton(id, code) {
+      const el = document.getElementById(id);
+      const on = e => { e.preventDefault(); Input.keys[code] = true; };
+      const off = e => { e.preventDefault(); Input.keys[code] = false; };
+
+      el.addEventListener('touchstart', on, { passive: false });
+      el.addEventListener('touchend', off, { passive: false });
+      el.addEventListener('touchcancel', off, { passive: false });
+
+      el.addEventListener('mousedown', on);
+      el.addEventListener('mouseup', off);
+      el.addEventListener('mouseleave', off);
+    }
+
+    bindHoldButton('btn-up', 'ArrowUp');
+    bindHoldButton('btn-down', 'ArrowDown');
+    bindHoldButton('btn-left', 'ArrowLeft');
+    bindHoldButton('btn-right', 'ArrowRight');
+
+    const actionBtn = document.getElementById('btn-action');
+    const actionPress = e => { e.preventDefault(); Input.justPressed['Space'] = true; };
+    actionBtn.addEventListener('touchstart', actionPress, { passive: false });
+    actionBtn.addEventListener('mousedown', actionPress);
+
+    const bgPalettes = {
+      construction: { sky:'#2a1a0a', ground:'#3a2a1a', accent:'#5c3b1e' },
+      dataroom:     { sky:'#0a0f1a', ground:'#0f1f2f', accent:'#1b2f4d' },
+      engine:       { sky:'#0f0f18', ground:'#181830', accent:'#2a2a50' },
+      meadow:       { sky:'#1a3020', ground:'#2a4a2a', accent:'#3a6040' }
+    };
+
+    const targetConfigs = {
+      loop:         { emoji:'🔁', color:'#64748b', label:'뺑뺑이' },
+      frontAd:      { emoji:'🧱', color:'#f97316', label:'버튼→전면광고' },
+      subAd:        { emoji:'🧩', color:'#22c55e', label:'소제목 밑 광고' },
+      kwPast:       { emoji:'📼', color:'#64748b', label:'과거 이슈' },
+      kwTooEarly:   { emoji:'🗓️', color:'#22d3ee', label:'너무 이른 키워드' },
+      kwHot:        { emoji:'🔥', color:'#f97316', label:'잠재 트래픽' },
+      dataroom:     { emoji:'💻', color:'#a855f7', label:'데이터 룸' },
+      benchGood:    { emoji:'📊', color:'#4ade80', label:'상단 글 벤치마킹' },
+      benchBad:     { emoji:'📉', color:'#ef4444', label:'잘못된 벤치마킹' },
+      construction: { emoji:'🚧', color:'#f59e0b', label:'다회성 트래픽' },
+      engine:       { emoji:'⚙️', color:'#ef4444', label:'레버리지' },
+      cpa:          { emoji:'🎯', color:'#22c55e', label:'CPA' },
+      brand:        { emoji:'🏛️', color:'#a855f7', label:'브랜딩' },
+      coreMeh:      { emoji:'😵', color:'#64748b', label:'남 따라하기' },
+      coreFast:     { emoji:'💸', color:'#f97316', label:'한 방 뽑기' },
+      coreTrue:     { emoji:'💚', color:'#22c55e', label:'되는 사업' },
+      stamp:        { emoji:'⭐', color:'#eab308', label:'최종 프리셀' }
+    };
+
+    function drawRect(x,y,w,h,col,a=1){
+      ctx.globalAlpha=a;
+      ctx.fillStyle=col;
+      ctx.fillRect(x,y,w,h);
+      ctx.globalAlpha=1;
+    }
+
+    function renderText(txt,x,y,size,col,align='center',bold=false){
+      ctx.fillStyle=col;
+      ctx.textAlign=align;
+      ctx.font=`${bold?'bold ':''}${size}px Satoshi, sans-serif`;
+      ctx.fillText(txt,x,y);
+    }
+
+    function drawBackground(){
+      const p = bgPalettes[state.bgDecor];
+      drawRect(0,0,W,H*0.55,p.sky);
+      const g = ctx.createLinearGradient(0,H*0.45,0,H*0.65);
+      g.addColorStop(0,p.accent);
+      g.addColorStop(1,p.ground);
+      ctx.fillStyle = g;
+      ctx.fillRect(0,H*0.45,W,H*0.2);
+      drawRect(0,H*0.62,W,H*0.38,p.ground);
+
+      if(state.bgDecor==='construction'){
+        [[40,180,90,270],[160,130,70,330],[260,160,100,300],[400,100,80,360],[510,180,60,280]].forEach(([x,y,w,h])=>{
+          ctx.fillStyle='#1a0f00';
+          ctx.fillRect(x,y,w,h);
+          ctx.fillStyle='#ffcc6633';
+          for(let r=0;r<5;r++) for(let c=0;c<2;c++) ctx.fillRect(x+10+c*20,y+15+r*35,12,14);
+        });
+      } else if(state.bgDecor==='dataroom'){
+        for(let i=0;i<4;i++){
+          ctx.fillStyle='#111a2a';
+          ctx.beginPath();
+          ctx.roundRect(60+i*130,160,80,180,4);
+          ctx.fill();
+          for(let j=0;j<7;j++){
+            ctx.fillStyle=Math.random()>.4?'#22c55e':'#1a3a2a';
+            ctx.fillRect(70+i*130,175+j*24,10,8);
+          }
+        }
+      } else if(state.bgDecor==='engine'){
+        ctx.strokeStyle='#3a3a6a';
+        ctx.lineWidth=2;
+        for(let i=0;i<5;i++){ ctx.beginPath(); ctx.moveTo(i*130,0); ctx.lineTo(i*130,H); ctx.stroke(); }
+        for(let j=0;j<5;j++){ ctx.beginPath(); ctx.moveTo(0,j*130); ctx.lineTo(W,j*130); ctx.stroke(); }
+      } else if(state.bgDecor==='meadow'){
+        ctx.fillStyle='#3a8040';
+        for(let i=0;i<40;i++){
+          const gx=60+i*14, gy=H*0.6+Math.sin(i)*8;
+          ctx.fillRect(gx,gy,4,12+Math.abs(Math.sin(i*2))*10);
+        }
+        ctx.fillStyle='#ffdd44aa';
+        ctx.beginPath();
+        ctx.arc(500,100,40,0,Math.PI*2);
+        ctx.fill();
       }
     }
-  }else if(d==='engine'){
-    ctx.strokeStyle='#3a3a6a';ctx.lineWidth=2;
-    for(let i=0;i<5;i++){ctx.beginPath();ctx.moveTo(i*130,0);ctx.lineTo(i*130,H);ctx.stroke();}
-    for(let j=0;j<5;j++){ctx.beginPath();ctx.moveTo(0,j*130);ctx.lineTo(W,j*130);ctx.stroke();}
-  }else if(d==='meadow'){
-    ctx.fillStyle='#3a8040';
-    for(let i=0;i<40;i++){
-      const gx=60+i*14,gy=H*0.6+Math.sin(i)*8;
-      ctx.fillRect(gx,gy,4,12+Math.abs(Math.sin(i*2))*10);
+
+    function drawChar(cx,cy,dir,frame,isPlayer){
+      const C = isPlayer
+        ? {hair:'#1e293b',skin:'#fcd34d',shirt:'#0ea5e9',pants:'#0f172a',shoes:'#020617',eye:'#0f172a'}
+        : {hair:'#94a3b8',skin:'#fcd34d',shirt:'#64748b',pants:'#334155',shoes:'#0f172a',eye:'#f8fafc'};
+
+      ctx.fillStyle='#00000055';
+      ctx.beginPath();
+      ctx.ellipse(cx,cy+14,16,5,0,0,Math.PI*2);
+      ctx.fill();
+
+      ctx.save();
+      if(dir===1){
+        ctx.translate(cx,cy);
+        ctx.scale(-1,1);
+        ctx.translate(-cx,-cy);
+      }
+
+      const legSwing = Math.sin(frame*Math.PI/2)*4;
+      const armSwing = Math.sin(frame*Math.PI/2)*5;
+
+      ctx.fillStyle=C.shoes;
+      ctx.fillRect(cx-7,cy+6+legSwing,7,5);
+      ctx.fillRect(cx+2,cy+6-legSwing,7,5);
+
+      ctx.fillStyle=C.pants;
+      ctx.fillRect(cx-7,cy-5,7,10);
+      ctx.fillRect(cx+2,cy-5,7,10);
+
+      ctx.fillStyle=C.shirt;
+      ctx.fillRect(cx-10,cy-24,20,20);
+      ctx.fillRect(cx-14,cy-22+armSwing,5,14);
+      ctx.fillRect(cx+10,cy-22-armSwing,5,14);
+
+      ctx.fillStyle=C.skin;
+      ctx.fillRect(cx-14,cy-8+armSwing,5,5);
+      ctx.fillRect(cx+10,cy-8-armSwing,5,5);
+      ctx.fillRect(cx-9,cy-42,18,18);
+
+      ctx.fillStyle=C.hair;
+      ctx.fillRect(cx-10,cy-44,20,7);
+      ctx.fillRect(cx-12,cy-42,3,12);
+      ctx.fillRect(cx+9,cy-42,3,10);
+
+      ctx.fillStyle=C.eye;
+      ctx.fillRect(cx-5,cy-34,4,4);
+      ctx.fillRect(cx+3,cy-34,4,4);
+      ctx.restore();
     }
-    ctx.fillStyle='#ffdd44aa';ctx.beginPath();ctx.arc(500,100,40,0,Math.PI*2);ctx.fill();
-  }
-  ctx.restore();
-}
-const PLAYER_COLORS={hair:'#1e293b',skin:'#fcd34d',shirt:'#0ea5e9',pants:'#0f172a',shoes:'#020617',eye:'#0f172a',shadow:'#00000055'};
-const MASTER_COLORS={hair:'#94a3b8',skin:'#fcd34d',shirt:'#64748b',pants:'#334155',shoes:'#0f172a',eye:'#f8fafc',shadow:'#00000055'};
-function drawPixelChar(cx,cy,dir,frame,isPlayer){
-  const c=isPlayer?PLAYER_COLORS:MASTER_COLORS;
-  ctx.fillStyle=c.shadow;ctx.beginPath();ctx.ellipse(cx,cy+14,16,5,0,0,Math.PI*2);ctx.fill();
-  ctx.save();
-  if(dir===1){ctx.translate(cx,cy);ctx.scale(-1,1);ctx.translate(-cx,-cy);}
-  const legSwing=Math.sin(frame*Math.PI/2)*4;
-  const armSwing=Math.sin(frame*Math.PI/2)*5;
-  ctx.fillStyle=c.shoes;
-  ctx.fillRect(cx-7,cy+6+legSwing,7,5);ctx.fillRect(cx+2,cy+6-legSwing,7,5);
-  ctx.fillStyle=c.pants;
-  ctx.fillRect(cx-7,cy-5,7,10);ctx.fillRect(cx+2,cy-5,7,10);
-  ctx.fillStyle=c.shirt;
-  ctx.fillRect(cx-10,cy-24,20,20);
-  ctx.fillRect(cx-14,cy-22+armSwing,5,14);
-  ctx.fillRect(cx+10,cy-22-armSwing,5,14);
-  ctx.fillStyle=c.skin;
-  ctx.fillRect(cx-14,cy-8+armSwing,5,5);
-  ctx.fillRect(cx+10,cy-8-armSwing,5,5);
-  ctx.fillRect(cx-9,cy-42,18,18);
-  ctx.fillStyle=c.hair;
-  ctx.fillRect(cx-10,cy-44,20,7);
-  ctx.fillRect(cx-12,cy-42,3,12);ctx.fillRect(cx+9,cy-42,3,10);
-  ctx.fillStyle=c.eye;
-  ctx.fillRect(cx-5,cy-34,4,4);ctx.fillRect(cx+3,cy-34,4,4);
-  if(isPlayer){
-    ctx.fillStyle='#fff';
-    ctx.fillRect(cx-4,cy-35,2,2);ctx.fillRect(cx+4,cy-35,2,2);
-  }
-  ctx.restore();
-}
-function drawMaster(){
-  const m=state.master;
-  drawPixelChar(m.x,m.y,0,0,false);
-  ctx.fillStyle='rgba(0,0,0,.7)';
-  ctx.beginPath();ctx.roundRect(m.x-36,m.y-70,72,20,4);ctx.fill();
-  renderText('박사님',m.x,m.y-56,12,'#00ff99','center',true);
-}
-let flashAlpha=0;
-function drawFlash(){if(flashAlpha<=0)return;drawRect(0,0,W,H,'#ffffff',flashAlpha);flashAlpha=Math.max(0,flashAlpha-0.02);}
-const targetConfigs={
-  loop:{emoji:'🔁',color:'#64748b',label:'뺑뺑이 (페이지 돌리기)'},
-  frontAd:{emoji:'🧱',color:'#f97316',label:'버튼 → 전면 광고'},
-  subAd:{emoji:'🧩',color:'#22c55e',label:'소제목 밑에 광고 붙이기'},
-  kwPast:{emoji:'📼',color:'#64748b',label:'과거 이슈 (잠재 트래픽 없음)'},
-  kwTooEarly:{emoji:'🗓️',color:'#22d3ee',label:'너무 이른 키워드'},
-  kwHot:{emoji:'🔥',color:'#f97316',label:'잠재 트래픽 있는 키워드'},
-  dataroom:{emoji:'💻',color:'#a855f7',label:'만체리 데이터 룸'},
-  benchGood:{emoji:'📊',color:'#4ade80',label:'상단 글 구조 벤치마킹'},
-  benchBad:{emoji:'📉',color:'#f97316',label:'잘못된 벤치마킹'},
-  construction:{emoji:'🚧',color:'#f59e0b',label:'다회성 트래픽 설계'},
-  engine:{emoji:'⚙️',color:'#ef4444',label:'유료 광고 엔진(레버리지)'},
-  cpa:{emoji:'🎯',color:'#22c55e',label:'CPA · 제휴 상품(고객당 가치)'},
-  brand:{emoji:'🏛️',color:'#a855f7',label:'브랜딩 · 사업화 사이트'},
-  coreMeh:{emoji:'😵',color:'#64748b',label:'남 따라하기 코어'},
-  coreFast:{emoji:'💸',color:'#f97316',label:'한 방에 뽑기 코어'},
-  coreTrue:{emoji:'💚',color:'#22c55e',label:'내가 좋아하며 되는 사업'},
-  stamp:{emoji:'⭐',color:'#eab308',label:'최종 프리셀 / 로그아웃'}
-};
-function drawTargets(){
-  for(const t of state.targets){
-    if(!t.active)continue;
-    const conf=targetConfigs[t.type];if(!conf)continue;
-    const pulse=Math.sin(Date.now()/200+t.x*0.01)*0.1+1;
-    ctx.save();ctx.translate(t.x,t.y);
-    ctx.globalAlpha=0.28;ctx.fillStyle=conf.color;
-    ctx.beginPath();ctx.arc(0,0,30*pulse,0,Math.PI*2);ctx.fill();
-    ctx.globalAlpha=1;
-    ctx.font='34px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.fillText(conf.emoji,0,0);
-    renderText(conf.label,0,-40,11,conf.color,'center',true);
-    ctx.restore();
-  }
-}
-function render(){
-  ctx.clearRect(0,0,W,H);
-  if(state.phase!=='play')return;
-  const sx=(Math.random()-.5)*state.camShake*8;
-  const sy=(Math.random()-.5)*state.camShake*8;
-  ctx.save();
-  if(state.camShake>0){ctx.translate(sx,sy);state.camShake=Math.max(0,state.camShake-0.1);}
-  drawBackground();drawTargets();drawMaster();
-  drawPixelChar(state.player.x,state.player.y,state.player.dir,state.player.frame,true);
-  drawFlash();
-  ctx.restore();
-}
-let lastTime=0,_fpsF=0,_fpsL=performance.now(),_fpsVal=0;
-function update(dt){
-  if(state.phase!=='play')return;
-  const pl=state.player;let moved=false;
-  if(Input.keys['ArrowLeft']||Input.keys['KeyA']){pl.x=Math.max(20,pl.x-SPEED*dt);pl.dir=1;moved=true;}
-  else if(Input.keys['ArrowRight']||Input.keys['KeyD']){pl.x=Math.min(W-20,pl.x+SPEED*dt);pl.dir=0;moved=true;}
-  if(Input.keys['ArrowUp']||Input.keys['KeyW']){pl.y=Math.max(100,pl.y-SPEED*dt);moved=true;}
-  else if(Input.keys['ArrowDown']||Input.keys['KeyS']){pl.y=Math.min(540,pl.y+SPEED*dt);moved=true;}
-  if(moved){pl.frameTimer+=dt;if(pl.frameTimer>0.1){pl.frame=(pl.frame+1)%4;pl.frameTimer=0;}}else{pl.frame=0;pl.frameTimer=0;}
-  if(Input.justPressed['Space']){/* 이후 상호작용 로직 붙이면 됨 */ }
-  Input.justPressed={};
-}
-function updateFPS(now){
-  _fpsF++;
-  if(now-_fpsL>=1000){
-    _fpsVal=Math.round(_fpsF*1000/(now-_fpsL));
-    _fpsF=0;_fpsL=now;
-    document.getElementById('fps').textContent=`FPS:${_fpsVal}`;
-  }
-}
-function loop(now){
-  const dt=Math.min((now-lastTime)/1000,0.05);
-  lastTime=now;
-  update(dt);render();updateFPS(now);
-  requestAnimationFrame(loop);
-}
-function updateMeta(){
-  document.getElementById('meta-label').textContent=
-    `수: ${state.traffic} | 단가: $${state.cpc.toFixed(2)} | 잠재 트래픽: ${state.keywordPotential} | 노출 가능성: ${state.exposureScore} | 유입 사유: ${state.clickAppeal}
-코어(Core): ${state.core} | 근본 원리: ${state.principle} (가격×수 이해도)`;
-}
-function updateRevenue(){
-  const baseRev=state.traffic*state.cpc;
-  const appealBonus=1+state.clickAppeal/200;
-  const coreBonus=1+state.core/500;
-  const principleBonus=1+state.principle/500;
-  const rev=baseRev*appealBonus*coreBonus*principleBonus;
-  state.score=rev;
-  document.getElementById('revenue').textContent=
-    `REVENUE: $${rev.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
-}
-document.getElementById('start-btn').addEventListener('click',()=>{
-  const s=document.getElementById('start-screen');
-  if(s)s.remove();
-  state.phase='play';
-  lastTime=performance.now();
-  updateRevenue();updateMeta();
-  requestAnimationFrame(loop);
-});
-</script>
+
+    function drawMaster(){
+      const m = state.master;
+      drawChar(m.x,m.y,0,0,false);
+
+      ctx.fillStyle='rgba(0,0,0,.8)';
+      ctx.beginPath();
+      ctx.roundRect(m.x-30,m.y-68,60,18,4);
+      ctx.fill();
+      renderText('박사님',m.x,m.y-55,11,'#00ff99','center',true);
+
+      const dist = Math.hypot(state.player.x-m.x, state.player.y-m.y);
+      if(dist < INTERACT_DIST){
+        ctx.fillStyle='rgba(0,255,153,.25)';
+        ctx.beginPath();
+        ctx.ellipse(m.x,m.y+14,24,8,0,0,Math.PI*2);
+        ctx.fill();
+        renderText('상호작용',m.x,m.y-80,11,'#00ff99','center',true);
+      }
+    }
+
+    function drawTargets(){
+      for(const t of state.targets){
+        if(!t.active) continue;
+        const conf = targetConfigs[t.type];
+        const pulse = Math.sin(Date.now()/200 + t.x*0.01)*0.08 + 1;
+
+        ctx.save();
+        ctx.translate(t.x,t.y);
+        ctx.globalAlpha=0.25;
+        ctx.fillStyle=conf.color;
+        ctx.beginPath();
+        ctx.arc(0,0,28*pulse,0,Math.PI*2);
+        ctx.fill();
+        ctx.globalAlpha=1;
+        ctx.font='28px sans-serif';
+        ctx.textAlign='center';
+        ctx.textBaseline='middle';
+        ctx.fillText(conf.emoji,0,0);
+        renderText(conf.label,0,-36,10,conf.color,'center',true);
+
+        const dist = Math.hypot(state.player.x-t.x, state.player.y-t.y);
+        if(dist < INTERACT_DIST) renderText('상호작용',0,-50,10,'#fff','center',true);
+        ctx.restore();
+      }
+    }
+
+    let flashAlpha = 0;
+
+    function render(){
+      ctx.clearRect(0,0,W,H);
+      if(state.phase!=='play') return;
+
+      ctx.save();
+      if(state.camShake>0){
+        ctx.translate((Math.random()-.5)*state.camShake*6,(Math.random()-.5)*state.camShake*6);
+        state.camShake=Math.max(0,state.camShake-0.1);
+      }
+
+      drawBackground();
+      drawTargets();
+      drawMaster();
+      drawChar(state.player.x,state.player.y,state.player.dir,state.player.frame,true);
+
+      if(flashAlpha>0){
+        drawRect(0,0,W,H,'#ffffff',flashAlpha);
+        flashAlpha=Math.max(0,flashAlpha-0.02);
+      }
+      ctx.restore();
+    }
+
+    function updateRevenue(){
+      const rev = state.traffic * state.cpc * (1 + state.clickAppeal/200) * (1 + state.core/500) * (1 + state.principle/500);
+      state.score = rev;
+      document.getElementById('revenue').textContent =
+        'REVENUE: $' + rev.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    }
+
+    function setDialog(speaker,txt){
+      const sp = document.getElementById('dialog-speaker');
+      sp.textContent = speaker;
+      sp.style.color =
+        speaker==='박사님' ? '#00ff99' :
+        speaker.includes('만체리') ? '#a855f7' :
+        speaker.includes('사업화') ? '#f97316' :
+        speaker.includes('코어') ? '#22c55e' : '#38bdf8';
+      document.getElementById('dialog-text').textContent = txt;
+    }
+
+    function setTargets(stage){
+      state.targets = [];
+      if(stage===1){
+        state.targets = [
+          {x:160,y:320,type:'loop',active:true},
+          {x:300,y:260,type:'frontAd',active:true},
+          {x:440,y:340,type:'subAd',active:true}
+        ];
+      } else if(stage===2){
+        state.targets = [
+          {x:130,y:380,type:'kwPast',active:true},
+          {x:290,y:410,type:'kwTooEarly',active:true},
+          {x:450,y:370,type:'kwHot',active:true},
+          {x:190,y:260,type:'dataroom',active:true},
+          {x:350,y:260,type:'benchGood',active:true},
+          {x:480,y:450,type:'benchBad',active:true}
+        ];
+      } else if(stage===3){
+        state.targets = [
+          {x:130,y:360,type:'construction',active:true},
+          {x:290,y:280,type:'engine',active:true},
+          {x:460,y:340,type:'engine',active:true},
+          {x:200,y:460,type:'cpa',active:true},
+          {x:400,y:450,type:'brand',active:true}
+        ];
+      } else if(stage===4){
+        state.targets = [
+          {x:170,y:320,type:'coreMeh',active:true},
+          {x:300,y:260,type:'coreFast',active:true},
+          {x:430,y:320,type:'coreTrue',active:true}
+        ];
+      } else if(stage===5){
+        state.targets = [
+          {x:300,y:300,type:'stamp',active:true}
+        ];
+      }
+    }
+
+    function advanceStage(n,bg){
+      state.stage = n;
+      state.bgDecor = bg;
+    }
+
+    function checkProgress(){
+      if(state.stage===1){
+        if(state.targets.every(t=>!t.active)){
+          advanceStage(2,'dataroom');
+          setTargets(2);
+          setDialog('박사님','기술은 맛봤다. 이제 진짜 본질인 만체리 단계다.');
+          flashAlpha=0.3;
+        }
+      } else if(state.stage===2){
+        if(state.keywordPotential >= 30 && state.exposureScore >= 30){
+          advanceStage(3,'engine');
+          setTargets(3);
+          setDialog('박사님','본질을 봤다면, 이제 사업화·고수익화다. 레버리지 구조를 설계하게.');
+          flashAlpha=0.3;
+        }
+      } else if(state.stage===3){
+        if(state.targets.filter(t=>['cpa','brand'].includes(t.type) && t.active).length===0){
+          advanceStage(4,'meadow');
+          setTargets(4);
+          setDialog('박사님','이제 마지막이다. 내가 좋아하며 되는 사업인지, 코어를 정리하게.');
+          flashAlpha=0.4;
+        }
+      } else if(state.stage===4){
+        if(state.targets.every(t=>!t.active)){
+          advanceStage(5,'meadow');
+          setTargets(5);
+          setDialog('박사님','코어가 정렬됐다. 마지막 프리셀을 마무리하게.');
+          flashAlpha=0.4;
+        }
+      }
+    }
+
+    function showEnd(){
+      const el = document.createElement('div');
+      el.style.cssText = 'position:absolute;inset:0;z-index:20;background:rgba(5,10,15,0.97);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:16px;';
+      el.innerHTML = `
+        <div style="font-size:48px;">⭐</div>
+        <h1 style="font-size:24px;font-weight:700;color:#00ff99;text-align:center;">기술 · 만체리 · 사업화·고수익화 · 코어 완성</h1>
+        <p style="color:#94a3b8;font-size:13px;line-height:1.8;text-align:center;max-width:440px;padding:0 16px;">
+          최종 수익: <strong style="color:#00ff99;font-size:18px;">$${state.score.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</strong><br>
+          기술 위에 본질(만체리: 잠재 트래픽·노출 가능성·가격×수),<br>
+          사업화·고수익화(다회성 트래픽·브랜딩·CPA·내 상품·레버리지)를 쌓고,<br>
+          코어까지 정렬한 결과입니다.
+        </p>
+        <button onclick="location.reload()" style="background:#00ff99;color:#07110d;border:none;border-radius:8px;padding:10px 28px;font-size:15px;font-weight:700;cursor:pointer;">다시 증명하기</button>
+      `;
+      document.getElementById('wrap').appendChild(el);
+    }
+
+    function doTarget(t){
+      switch(t.type){
+        case 'loop':
+          state.traffic += 5;
+          setDialog('기술','뺑뺑이 구조입니다. 페이지를 여러 번 돌게 만드는 방식으로 수가 늘어납니다.');
+          t.active = false;
+          break;
+        case 'frontAd':
+          state.traffic += 3;
+          state.cpc += 0.05;
+          setDialog('기술','버튼을 눌렀을 때 전면 광고를 노출하는 방식입니다.');
+          t.active = false;
+          break;
+        case 'subAd':
+          state.cpc += 0.1;
+          setDialog('기술','소제목 밑에 광고를 붙이는 방식입니다.');
+          t.active = false;
+          break;
+
+        case 'kwPast':
+          state.keywordPotential = Math.max(0, state.keywordPotential - 30);
+          setDialog('만체리 - 잠재 트래픽','이미 끝난 과거 이슈입니다.');
+          t.active = false;
+          break;
+        case 'kwTooEarly':
+          state.keywordPotential = Math.max(0, state.keywordPotential - 10);
+          setDialog('만체리 - 잠재 트래픽','너무 이른 키워드입니다.');
+          t.active = false;
+          break;
+        case 'kwHot':
+          state.keywordPotential = Math.min(100, state.keywordPotential + 50);
+          state.traffic += 10;
+          setDialog('만체리 - 잠재 트래픽','지금 사람들이 실제로 검색하기 시작한 키워드입니다.');
+          t.active = false;
+          break;
+        case 'dataroom':
+          state.principle = Math.min(100, state.principle + 10);
+          setDialog('만체리 - 근본 원리','가격×수 구조를 보며 어떤 조합이 사업이 되는지 판단합니다.');
+          break;
+        case 'benchGood':
+          state.exposureScore = Math.min(100, state.exposureScore + 30);
+          state.principle = Math.min(100, state.principle + 15);
+          setDialog('만체리 - 노출 가능성','상단 글 구조를 벤치마킹해 노출 가능성을 올립니다.');
+          t.active = false;
+          break;
+        case 'benchBad':
+          state.exposureScore = Math.max(0, state.exposureScore - 10);
+          setDialog('만체리 - 노출 가능성','겉모습만 흉내 낸 벤치마킹입니다.');
+          t.active = false;
+          break;
+
+        case 'construction':
+          state.traffic += 20;
+          setDialog('사업화·고수익화 - 다회성 트래픽','다회성 트래픽 구조를 설계합니다.');
+          break;
+        case 'engine':
+          state.traffic += 40;
+          state.cpc += 0.4;
+          setDialog('사업화·고수익화 - 레버리지','같은 시간과 글로 더 큰 결과를 내는 레버리지 구조입니다.');
+          break;
+        case 'cpa':
+          state.cpc += 1.2;
+          setDialog('사업화·고수익화 - 고객당 가치','CPA와 제휴 상품으로 가격을 키웁니다.');
+          t.active = false;
+          break;
+        case 'brand':
+          state.cpc += 0.6;
+          state.traffic += 15;
+          setDialog('사업화·고수익화 - 브랜딩','브랜딩과 사업화 사이트로 신뢰와 전환을 높입니다.');
+          t.active = false;
+          break;
+
+        case 'coreMeh':
+          state.core = Math.max(0, state.core - 10);
+          setDialog('코어(Core)','남 따라하기 코어입니다.');
+          t.active = false;
+          break;
+        case 'coreFast':
+          state.core = Math.max(0, state.core - 5);
+          setDialog('코어(Core)','한 방 뽑기 코어입니다.');
+          t.active = false;
+          break;
+        case 'coreTrue':
+          state.core = Math.min(100, state.core + 40);
+          setDialog('코어(Core)','내가 좋아하며 되는 사업입니다.');
+          t.active = false;
+          break;
+
+        case 'stamp':
+          setDialog('시스템 알림','구조가 정렬되었습니다. 로그아웃 중...');
+          updateRevenue();
+          setTimeout(showEnd, 1400);
+          return;
+      }
+
+      updateRevenue();
+      checkProgress();
+    }
+
+    function masterTalk(){
+      const msgs = {
+        1: '지금 보는 건 기술이다. 뺑뺑이, 버튼→전면 광고, 소제목 밑 광고를 확인해보게.',
+        2: '이제 본질, 만체리 단계다. 잠재 트래픽, 노출 가능성, 가격×수 구조를 본다.',
+        3: '사업화·고수익화 단계다. 다회성 트래픽, 브랜딩, CPA, 레버리지를 설계한다.',
+        4: '마지막은 코어다. 내가 좋아하며 실제로 되는 사업인지 본다.',
+        5: '마지막 프리셀을 정리하게.'
+      };
+      setDialog('박사님', msgs[state.stage] || '계속 진행하게.');
+    }
+
+    function handleInteraction(){
+      const p = state.player;
+      if(Math.hypot(p.x-state.master.x, p.y-state.master.y) < INTERACT_DIST){
+        masterTalk();
+        return;
+      }
+
+      for(const t of state.targets){
+        if(!t.active) continue;
+        if(Math.hypot(p.x-t.x, p.y-t.y) < INTERACT_DIST){
+          doTarget(t);
+          return;
+        }
+      }
+    }
+
+    function update(dt){
+      if(state.phase!=='play') return;
+
+      const p = state.player;
+      let moved = false;
+
+      if(Input.keys['ArrowLeft']){ p.x = Math.max(20, p.x - SPEED*dt); p.dir = 1; moved = true; }
+      else if(Input.keys['ArrowRight']){ p.x = Math.min(W-20, p.x + SPEED*dt); p.dir = 0; moved = true; }
+
+      if(Input.keys['ArrowUp']){ p.y = Math.max(100, p.y - SPEED*dt); moved = true; }
+      else if(Input.keys['ArrowDown']){ p.y = Math.min(530, p.y + SPEED*dt); moved = true; }
+
+      if(moved){
+        p.frameTimer += dt;
+        if(p.frameTimer > 0.1){
+          p.frame = (p.frame + 1) % 4;
+          p.frameTimer = 0;
+        }
+      } else {
+        p.frame = 0;
+        p.frameTimer = 0;
+      }
+
+      if(Input.justPressed['Space']) handleInteraction();
+      Input.justPressed = {};
+    }
+
+    let lastTime = 0;
+    function loop(now){
+      const dt = Math.min((now - lastTime) / 1000, 0.05);
+      lastTime = now;
+      update(dt);
+      render();
+      requestAnimationFrame(loop);
+    }
+
+    document.getElementById('start-btn').addEventListener('click', () => {
+      document.getElementById('start-screen').style.display = 'none';
+      state.phase = 'play';
+      advanceStage(1, 'construction');
+      setTargets(1);
+      updateRevenue();
+      setDialog('박사님','뺑뺑이, 버튼→전면 광고, 소제목 밑 광고 세 가지 기술을 먼저 확인해 보게.');
+      lastTime = performance.now();
+      requestAnimationFrame(loop);
+    });
+  </script>
 </body>
 </html>
