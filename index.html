@@ -2,8 +2,8 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8"/>
-  <title>본질센스 RPG: 기술 · 만체리 · 사업화 · 코어</title>
-  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,700&display=swap" rel="stylesheet">
+  <title>본질센스 RPG: 기술 · 만체리 · 사업화·고수익화 · 코어</title>
+  //api.fontshare.com/v2/css?f[]=satoshi@400,700&display=swap" rel="stylesheet">
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     body{
@@ -83,11 +83,11 @@
 </head>
 <body>
 <div id="wrap">
-  <canvas id="c" width="600" height="600"></canvas>
+  anvas id="c" width="600" height="600"></canvas>
   <div id="ui">
     <div id="hud">
       <div id="revenue">REVENUE: $0.00</div>
-      <div id="stage-label">STAGE 1: 기술 - 클릭 유도 잡기술</div>
+      <div id="stage-label">STAGE 1: 기술 - 뺑뺑이 · 전면 광고 · 소제목 밑 광고</div>
       <div id="meta-label">수: 0 | 단가: $1.00 | 잠재 트래픽: 0 | 노출 가능성: 0 | 유입 사유: 0
 코어(Core): 0 | 근본 원리: 0</div>
     </div>
@@ -99,16 +99,16 @@
 
     <div id="dialog-box">
       <div id="dialog-speaker">시스템 알림</div>
-      <div id="dialog-text">박사님께 다가가 SPACE를 눌러, 기술 → 만체리 → 사업화 → 코어 구조를 배우십시오.</div>
+      <div id="dialog-text">박사님께 다가가 SPACE를 눌러, 기술 → 만체리 → 사업화·고수익화(레버리지) → 코어 구조를 배우십시오.</div>
     </div>
 
     <div id="fps"></div>
   </div>
 
   <div id="start-screen">
-    <h1>본질센스 RPG<br>기술 · 만체리 · 사업화 · 코어</h1>
+    <h1>본질센스 RPG<br>기술 · 만체리 · 사업화·고수익화 · 코어</h1>
     <p>
-      기술(클릭 유도 잡기술) → 본질(만체리: 잠재 트래픽·노출 가능성·유입 사유) → 사업화(다회성 트래픽·브랜딩·CPA·내 상품) → 코어(내가 좋아하며 되는 사업)를 차례대로 체험합니다.
+      기술(뺑뺑이·전면 광고·소제목 밑 광고) → 본질(만체리: 잠재 트래픽·노출 가능성·유입 사유·가격×수) → 사업화·고수익화(다회성 트래픽·브랜딩·CPA·내 상품·레버리지) → 코어(내가 좋아하며 되는 사업)를 차례대로 체험합니다.
     </p>
     <button id="start-btn">▶ 시스템 가동</button>
   </div>
@@ -128,13 +128,13 @@ const state = {
   phase: 'start',
   stage: 1,
   score: 0,
-  traffic: 0,          // 수
-  cpc: 1.0,            // 단가
-  keywordPotential: 0, // 잠재 트래픽
-  exposureScore: 0,    // 노출 가능성
-  clickAppeal: 0,      // 유입 사유
-  core: 0,             // 코어
-  principle: 0,        // 근본 원리 이해 정도
+  traffic: 0,
+  cpc: 1.0,
+  keywordPotential: 0,
+  exposureScore: 0,
+  clickAppeal: 0,
+  core: 0,
+  principle: 0,
   player: { x: 300, y: 470, dir: 0, frame: 0, frameTimer: 0 },
   master: { x: 300, y: 120 },
   monster: { x: -200, y: -200, alive: false, shake: 0, hits: 0 },
@@ -316,12 +316,12 @@ function drawMonster(){
 
 // ───────────────── 타겟 오브젝트 ─────────────────
 const targetConfigs = {
-  // 기술: 클릭 유도 잡기술
-  ctaBad:  { emoji:'🔗', color:'#64748b', label:'나쁜 클릭 유도 문구' },
-  ctaMid:  { emoji:'🪝', color:'#fbbf24', label:'애매한 클릭 유도' },
-  ctaGood: { emoji:'✨', color:'#22c55e', label:'잘 먹히는 클릭 유도(잡기술)' },
+  // STAGE 1: 기술
+  loop:    { emoji:'🔁', color:'#64748b', label:'뺑뺑이 (페이지 돌리기)' },
+  frontAd: { emoji:'🧱', color:'#f97316', label:'버튼 → 전면 광고' },
+  subAd:   { emoji:'🧩', color:'#22c55e', label:'소제목 밑에 광고 붙이기' },
 
-  // 본질(만체리): 잠재 트래픽 / 노출 가능성 / 유입 사유
+  // STAGE 2: 만체리 - 잠재 트래픽 / 노출 가능성
   kwPast:     { emoji:'📼', color:'#64748b', label:'과거 이슈 (잠재 트래픽 없음)' },
   kwTooEarly: { emoji:'🗓️', color:'#22d3ee', label:'너무 이른 키워드' },
   kwHot:      { emoji:'🔥', color:'#f97316', label:'잠재 트래픽 있는 키워드' },
@@ -329,13 +329,13 @@ const targetConfigs = {
   benchGood:  { emoji:'📊', color:'#4ade80', label:'상단 글 구조 벤치마킹' },
   benchBad:   { emoji:'📉', color:'#f97316', label:'잘못된 벤치마킹' },
 
-  // 사업화: 다회성 트래픽, 브랜딩, 고객당 가치
+  // STAGE 3: 사업화·고수익화
   construction:{ emoji:'🚧', color:'#f59e0b', label:'다회성 트래픽 설계' },
-  engine:      { emoji:'⚙️', color:'#ef4444', label:'유료 광고 엔진' },
-  cpa:         { emoji:'🎯', color:'#22c55e', label:'CPA · 제휴 상품' },
+  engine:      { emoji:'⚙️', color:'#ef4444', label:'유료 광고 엔진(레버리지)' },
+  cpa:         { emoji:'🎯', color:'#22c55e', label:'CPA · 제휴 상품(고객당 가치)' },
   brand:       { emoji:'🏛️', color:'#a855f7', label:'브랜딩 · 사업화 사이트' },
 
-  // 코어
+  // STAGE 4: 코어
   coreMeh:   { emoji:'😵', color:'#64748b', label:'남 따라하기 코어' },
   coreFast:  { emoji:'💸', color:'#f97316', label:'한 방에 뽑기 코어' },
   coreTrue:  { emoji:'💚', color:'#22c55e', label:'내가 좋아하며 되는 사업' },
@@ -457,10 +457,10 @@ function getNearestTarget(){
 // ───────────────── 대사 ─────────────────
 function triggerMasterDialogue(){
   const msgs = {
-    1: "먼저 기술 단계다. 클릭 유도 잡기술과 로직만 파악해도 어느 정도는 먹힌다. 하지만 여기에만 머무르면 수익은 금방 막힌다.",
-    2: "이제 본질, 만체리 단계다. 잠재 트래픽이 있는가, 내가 노출시킬 수 있는가, 내 것에 들어올 이유가 있는가를 보는 구간이다. 벤치마킹을 하되, 크고 못하는 키워드보다 작고 되는 것을 노리게.",
-    3: "지금은 사업화 단계다. 다회성 트래픽, 브랜딩, 사업화 사이트와 원페이지, CPA·내 상품으로 고객당 가치를 올리는 구조를 만든다.",
-    4: "마지막은 코어다. 내가 좋아하며, 실제로 되는 사업인지. 이 코어가 있어야 5년, 10년, 15년을 버틸 수 있다."
+    1: "지금 보는 건 기술이다. 뺑뺑이, 버튼 → 전면 광고, 소제목 밑 광고 같은 것들. 어떤 기술이 어떤 식으로 수와 단가에 영향을 주는지부터 몸으로 확인해 보게.",
+    2: "이제 본질, 만체리 단계다. 잠재 트래픽, 내가 노출시킬 수 있는가(노출 가능성), 내 것에 들어올 이유, 그리고 가격×수 구조를 보는 구간이다. 벤치마킹을 하되, 크고 못하는 키워드보다 작고 되는 것을 노려야 한다.",
+    3: "지금은 사업화·고수익화 단계다. 다회성 트래픽, 브랜딩, 사업화 사이트와 원페이지, CPA·내 상품으로 고객당 가치를 올리고, 레버리지 구조를 설계하는 구간이다.",
+    4: "마지막은 코어다. 내가 좋아하며, 실제로 되는 사업인지. 이 코어가 있어야 5년·10년·15년을 버틸 수 있다."
   };
   setDialog('박사님', msgs[state.stage]);
 }
@@ -468,92 +468,91 @@ function triggerMasterDialogue(){
 // ───────────────── 타겟 행동 ─────────────────
 function executeTargetAction(t){
   switch(t.type){
-    // STAGE 1: 기술(클릭 유도 잡기술)
-    case 'ctaBad':
-      state.clickAppeal = Math.max(0, state.clickAppeal - 10);
-      setDialog('기술',
-        '“아래 링크를 클릭하세요”만 반복하는 문구는 나쁜 클릭 유도 기술입니다. 로직도, 이득도 없습니다.');
-      t.active=false;
-      break;
-    case 'ctaMid':
-      state.clickAppeal = Math.min(100, state.clickAppeal + 5);
-      setDialog('기술',
-        '“자세한 내용은 아래에서 확인해 보세요”는 평균적인 클릭 유도 기술입니다. 눈에 잘 띄긴 어렵습니다.');
-      t.active=false;
-      break;
-    case 'ctaGood':
-      state.clickAppeal = Math.min(100, state.clickAppeal + 30);
+    // STAGE 1: 기술
+    case 'loop':
       state.traffic += 5;
       setDialog('기술',
-        '“질문자님의 상황에서 50만 원 혜택을 받을 수 있는지, 아래에서 바로 확인해 보세요” 같은 문장은 잘 만든 클릭 유도 잡기술입니다.');
+        '페이지를 여러 번 돌게 만드는 뺑뺑이 구조입니다. 어떤 구조에서 수(트래픽)가 늘어나는지 감각을 쌓는 단계입니다.');
+      t.active=false;
+      break;
+    case 'frontAd':
+      state.traffic += 3;
+      state.cpc += 0.05;
+      setDialog('기술',
+        '버튼을 눌렀을 때 전면 광고를 노출하는 방식입니다. 특정 지점에서 광고를 집중적으로 보여주는 기술입니다.');
+      t.active=false;
+      break;
+    case 'subAd':
+      state.cpc += 0.1;
+      setDialog('기술',
+        '사람들이 실제로 정보를 읽는 소제목 밑에 광고를 붙이는 방식입니다. 글 흐름 속에서 광고를 배치하는 기술입니다.');
       t.active=false;
       break;
 
-    // STAGE 2: 본질(만체리) - 잠재 트래픽
+    // STAGE 2: 만체리 - 잠재 트래픽
     case 'kwPast':
       state.keywordPotential = Math.max(0, state.keywordPotential - 30);
-      state.traffic = Math.max(0, state.traffic - 1);
       setDialog('만체리 - 잠재 트래픽',
-        '아무도 찾지 않는 과거 이슈입니다. 이런 키워드는 크든 작든 의미가 없습니다.');
+        '이미 끝난 과거 이슈입니다. 현재 기준으로는 잠재 트래픽이 거의 없습니다.');
       t.active=false;
       break;
     case 'kwTooEarly':
       state.keywordPotential = Math.max(0, state.keywordPotential - 10);
       setDialog('만체리 - 잠재 트래픽',
-        '너무 이른 키워드입니다. 나중에는 좋겠지만, 지금 당장은 잠재 트래픽이 거의 없습니다.');
+        '너무 이른 키워드입니다. 언젠가는 기회가 될 수 있지만, 당장은 잠재 트래픽이 약합니다.');
       t.active=false;
       break;
     case 'kwHot':
       state.keywordPotential = Math.min(100, state.keywordPotential + 50);
       state.traffic += 10;
       setDialog('만체리 - 잠재 트래픽',
-        '지금 사람들이 실제로 검색하기 시작한 키워드입니다. 크고 안 되는 것보다, 작더라도 되는 것을 먼저 가져와야 합니다.');
+        '지금 사람들이 실제로 검색하기 시작한 키워드입니다. 크고 안 되는 것보다, 작더라도 되는 것을 먼저 가져옵니다.');
       t.active=false;
       break;
 
-    // STAGE 2: 본질(만체리) - 노출 가능성 / 벤치마킹
+    // STAGE 2: 만체리 - 노출 가능성 / 벤치마킹 / 가격×수
     case 'dataroom':
       state.principle = Math.min(100, state.principle + 10);
-      setDialog('만체리 - 데이터',
-        '내 머리가 아니라 데이터로 판단하는 연습입니다. 어떤 키워드에서 실제로 노출이 되는지 기록합니다.');
+      setDialog('만체리 - 근본 원리',
+        '데이터로 어떤 키워드에서 노출이 되는지 정리합니다. 여기서 가격×수 구조를 보며, 어떤 조합이 사업이 되는지 판단합니다.');
       break;
     case 'benchGood':
       state.exposureScore = Math.min(100, state.exposureScore + 30);
       state.principle = Math.min(100, state.principle + 15);
       setDialog('만체리 - 노출 가능성',
-        '상단에 있는 글을 벤치마킹했습니다. 제목, 소제목, 예시, 장치를 뜯어보고 비슷하게 구성해 노출 가능성을 올렸습니다.');
+        '상단에 있는 글을 벤치마킹했습니다. 제목, 소제목, 예시, 구조를 분석해 비슷한 결로 작성해 노출 가능성을 올립니다.');
       t.active=false;
       break;
     case 'benchBad':
       state.exposureScore = Math.max(0, state.exposureScore - 10);
       setDialog('만체리 - 노출 가능성',
-        '겉모습만 흉내 내거나, 크고 멋있어 보이는 키워드만 따라갔습니다. 크고 못하는 키워드보다 작고 되는 키워드를 노려야 합니다.');
+        '겉모습만 흉내 내거나, 크고 멋있어 보이는 키워드만 따라갔습니다. 크고 못하는 키워드보다 작고 되는 키워드를 노리는 게 만체리의 핵심입니다.');
       t.active=false;
       break;
 
-    // STAGE 3: 사업화 - 다회성 트래픽 / 브랜딩 / CPA·내 상품
+    // STAGE 3: 사업화·고수익화
     case 'construction':
       state.traffic += 20;
-      setDialog('사업화 - 다회성 트래픽',
+      setDialog('사업화·고수익화 - 다회성 트래픽',
         '다회성 트래픽이 들어오는 구조를 설계합니다. 사업화 사이트, 원페이지, 사람들이 반복해서 들어올 이유를 만듭니다.');
       break;
     case 'engine':
       state.traffic += 40;
       state.cpc += 0.4;
-      setDialog('사업화 - 유료 광고 엔진',
-        '유료 광고 엔진을 돌려, 짧은 시간에 데이터를 모읍니다. 손실이 아니라 학습 속도를 올리는 투자입니다.');
+      setDialog('사업화·고수익화 - 레버리지',
+        '유료 광고 엔진을 돌려, 짧은 시간에 데이터를 모읍니다. 같은 시간과 글로 더 큰 결과를 내는 레버리지 구조입니다.');
       break;
     case 'cpa':
       state.cpc += 1.2;
-      setDialog('사업화 - 고객당 가치',
-        'CPA와 제휴 상품을 붙여, 한 명의 방문자당 가져올 수 있는 가치를 올립니다.');
+      setDialog('사업화·고수익화 - 고객당 가치',
+        'CPA와 제휴 상품을 붙여, 한 명의 방문자당 가져올 수 있는 가치를 올립니다. 가격×수에서 “가격”을 키우는 설계입니다.');
       t.active=false;
       break;
     case 'brand':
       state.cpc += 0.6;
       state.traffic += 15;
-      setDialog('사업화 - 브랜딩',
-        '브랜딩과 사업화 사이트, 원페이지가 갖춰지면, 트래픽이 단순 숫자가 아니라 신뢰 있는 고객이 됩니다.');
+      setDialog('사업화·고수익화 - 브랜딩',
+        '브랜딩과 사업화 사이트, 원페이지가 갖춰지면, 같은 수(트래픽)로도 더 높은 신뢰와 전환을 만들 수 있습니다.');
       t.active=false;
       break;
 
@@ -561,13 +560,13 @@ function executeTargetAction(t){
     case 'coreMeh':
       state.core = Math.max(0, state.core - 10);
       setDialog('코어(Core)',
-        '“남들도 하니까…”로 시작한 코어입니다. 힘들어지면 가장 먼저 무너지는 방향입니다.');
+        '“남들도 하니까…”로 시작한 코어입니다. 방향이 분명하지 않아, 시간이 지날수록 피로감이 커질 수 있습니다.');
       t.active=false;
       break;
     case 'coreFast':
       state.core = Math.max(0, state.core - 5);
       setDialog('코어(Core)',
-        '“빨리 한 방에 뽑자”는 코어입니다. 한 번은 터질 수 있지만, 5년·10년·15년은 버티기 어렵습니다.');
+        '“빨리 한 방에 뽑자”는 코어입니다. 단기에는 동력이 되지만, 5년·10년·15년을 내다보기에는 불안정한 방향입니다.');
       t.active=false;
       break;
     case 'coreTrue':
@@ -580,7 +579,7 @@ function executeTargetAction(t){
     // 엔딩
     case 'stamp':
       setDialog('시스템 알림',
-        '기술 → 본질(만체리) → 사업화 → 코어 구조가 정렬되었습니다. 로그아웃을 진행합니다...');
+        '기술 → 본질(만체리: 잠재 트래픽·노출 가능성·가격×수) → 사업화·고수익화(레버리지) → 코어 구조가 정렬되었습니다. 로그아웃을 진행합니다...');
       updateRevenue();
       updateMeta();
       setTimeout(()=>{ state.phase='end'; showEndScreen(); }, 1800);
@@ -603,13 +602,13 @@ function attackMonster(){
       `[데미지 0] 딸깍, 한 시간에 얼마 같은 환상만 쫓는 노가다는 상단을 뚫지 못한다! (타격 횟수: ${state.monster.hits}/3)`);
   } else {
     setDialog('시스템 알림',
-      '가짜 노력의 한계를 체감했습니다. 이제부터는 만체리와 원리를 기반으로 움직여야 합니다.');
+      '가짜 노력의 한계를 체감했습니다. 이제부터는 만체리와 근본 원리를 기반으로 움직여야 합니다.');
     flashAlpha = 0.6;
     setTimeout(()=>{
       state.monster.alive=false;
-      advanceStage(3,'사업화 - 다회성 트래픽 · 브랜딩 · CPA','engine');
+      advanceStage(3,'사업화·고수익화 - 다회성 트래픽 · 브랜딩 · 레버리지','engine');
       setStageTargets(3);
-      setDialog('박사님','좋다. 이제 다회성 트래픽, 사업화 사이트, 브랜딩, 고객당 가치를 올리는 구조를 만들 차례다.');
+      setDialog('박사님','좋다. 이제 다회성 트래픽, 브랜딩, CPA·내 상품으로 가격×수 구조를 두껍게 만들고, 레버리지까지 설계할 차례다.');
       updateMeta();
     },1200);
   }
@@ -617,20 +616,20 @@ function attackMonster(){
 
 function stageProgressCheck(){
   if(state.stage===1){
-    const done = state.targets.filter(t=>['ctaBad','ctaMid','ctaGood'].includes(t.type) && t.active).length===0;
-    if(done && state.clickAppeal>=20){
-      advanceStage(2,'본질(만체리) - 잠재 트래픽 · 노출 가능성 · 유입 사유','dataroom');
+    const done = state.targets.filter(t=>['loop','frontAd','subAd'].includes(t.type) && t.active).length===0;
+    if(done){
+      advanceStage(2,'본질(만체리) - 잠재 트래픽 · 노출 가능성 · 가격×수','dataroom');
       setStageTargets(2);
-      setDialog('박사님','기술 맛보기는 끝났다. 이제 잠재 트래픽, 노출 가능성, 유입 사유를 보는 만체리 단계다.');
+      setDialog('박사님','기술은 맛봤으니, 이제 진짜 본질인 만체리 단계다. 잠재 트래픽과 노출 가능성, 가격×수 구조를 보며 “되는 것”에 집중하게.');
       flashAlpha = 0.35;
     }
   }
 
   if(state.stage===2){
     if(state.keywordPotential>=40 && state.exposureScore>=50){
-      advanceStage(3,'사업화 - 다회성 트래픽 · 브랜딩 · CPA','engine');
+      advanceStage(3,'사업화·고수익화 - 다회성 트래픽 · 브랜딩 · 레버리지','engine');
       setStageTargets(3);
-      setDialog('박사님','본질을 봤다면, 이제 사업화로 넘어간다. 다회성 트래픽과 브랜딩, CPA·내 상품으로 구조를 두껍게 만들어야 한다.');
+      setDialog('박사님','본질을 봤다면, 이제 사업화·고수익화다. 같은 시간과 글로 더 큰 결과를 내는 레버리지 구조를 설계해야 한다.');
       flashAlpha = 0.35;
     }
   }
@@ -658,9 +657,9 @@ function setStageTargets(stage){
   state.targets = [];
   if(stage===1){
     state.targets = [
-      { x:180, y:330, type:'ctaBad', active:true },
-      { x:300, y:260, type:'ctaMid', active:true },
-      { x:420, y:340, type:'ctaGood', active:true }
+      { x:160, y:320, type:'loop', active:true },
+      { x:300, y:260, type:'frontAd', active:true },
+      { x:440, y:340, type:'subAd', active:true }
     ];
   }else if(stage===2){
     state.targets = [
@@ -709,9 +708,9 @@ function setDialog(speaker,txt){
 
 function updateRevenue(){
   const baseRev = state.traffic * state.cpc;
-  const appealBonus = 1 + (state.clickAppeal / 200);   // 유입 사유
-  const coreBonus = 1 + (state.core / 500);           // 코어 100 -> +20%
-  const principleBonus = 1 + (state.principle / 500); // 근본 원리 100 -> +20%
+  const appealBonus = 1 + (state.clickAppeal / 200);
+  const coreBonus = 1 + (state.core / 500);
+  const principleBonus = 1 + (state.principle / 500);
   const rev = baseRev * appealBonus * coreBonus * principleBonus;
   state.score = rev;
   document.getElementById('revenue').textContent =
@@ -721,7 +720,7 @@ function updateRevenue(){
 function updateMeta(){
   document.getElementById('meta-label').textContent =
     `수: ${state.traffic} | 단가: $${state.cpc.toFixed(2)} | 잠재 트래픽: ${state.keywordPotential} | 노출 가능성: ${state.exposureScore} | 유입 사유: ${state.clickAppeal}
-코어(Core): ${state.core} | 근본 원리: ${state.principle}`;
+코어(Core): ${state.core} | 근본 원리: ${state.principle} (가격×수 이해도)`;
 }
 
 function showEndScreen(){
@@ -730,12 +729,12 @@ function showEndScreen(){
   el.style.cssText='position:absolute;inset:0;background:rgba(5,10,15,0.95);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;pointer-events:auto;z-index:100;';
   el.innerHTML = `
     <div style="font-size:56px;text-shadow:0 0 20px rgba(234,179,8,0.5);">⭐</div>
-    <h1 style="font-size:32px;font-weight:700;color:#00ff99;text-align:center;">기술 · 만체리 · 사업화 · 코어 완성</h1>
+    <h1 style="font-size:32px;font-weight:700;color:#00ff99;text-align:center;">기술 · 만체리 · 사업화·고수익화 · 코어 완성</h1>
     <p style="color:#94a3b8;font-size:15px;text-align:center;line-height:1.8;max-width:480px;">
       최종 수익: <strong style="color:#00ff99;font-size:20px;">$${state.score.toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2})}</strong><br>
-      기술(클릭 유도 잡기술) 위에, 본질(만체리: 잠재 트래픽·노출 가능성·유입 사유), 사업화(다회성 트래픽·브랜딩·CPA·내 상품)를 쌓고,<br>
-      마지막에 코어(내가 좋아하며 되는 사업)까지 정렬한 결과입니다.<br>
-      이제부터는 남의 노하우가 아니라, 당신이 설계한 구조가 수익을 결정합니다.
+      기술(뺑뺑이·전면 광고·소제목 밑 광고) 위에, 본질(만체리: 잠재 트래픽·노출 가능성·가격×수),<br>
+      사업화·고수익화(다회성 트래픽·브랜딩·CPA·내 상품·레버리지)를 쌓고,<br>
+      마지막에 코어(내가 좋아하며 되는 사업)까지 정렬한 결과입니다.
     </p>
     <button onclick="location.reload()" style="background:#00ff99;color:#050a0f;border:none;border-radius:6px;padding:12px 32px;font-size:16px;font-weight:700;cursor:pointer;font-family:'Satoshi',sans-serif;margin-top:10px;">
       다시 증명하기
@@ -767,12 +766,12 @@ function loop(now){
 document.getElementById('start-btn').addEventListener('click', ()=>{
   document.getElementById('start-screen').remove();
   state.phase='play';
-  advanceStage(1,'기술 - 클릭 유도 잡기술','construction');
+  advanceStage(1,'기술 - 뺑뺑이 · 전면 광고 · 소제목 밑 광고','construction');
   setStageTargets(1);
   updateRevenue();
   updateMeta();
   setDialog('박사님',
-    '기술(클릭 유도 잡기술)부터 맛보게. 하지만 기술에만 머무르면 금방 한계가 온다. 이 다음은 본질, 즉 만체리 단계다.');
+    '지금 보는 건 기술이다. 뺑뺑이, 버튼 → 전면 광고, 소제목 밑 광고 같은 것들. 이 다음 단계에서 본질과 가격×수 구조를 함께 보게 될 거다.');
   lastTime=performance.now();
   requestAnimationFrame(loop);
 });
