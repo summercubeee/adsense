@@ -6,23 +6,131 @@
   <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,700&display=swap" rel="stylesheet">
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
-    body{background:#0a0a0f;display:flex;justify-content:center;align-items:center;height:100vh;overflow:hidden;font-family:'Satoshi',sans-serif;}
-    #wrap{position:relative;width:600px;height:600px;box-shadow:0 0 50px rgba(0,255,153,0.15);}
-    canvas{display:block;image-rendering:pixelated;border-radius:4px;}
+    body{
+      background:#0a0a0f;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      height:100vh;
+      overflow:hidden;
+      font-family:'Satoshi',sans-serif;
+    }
+    #wrap{
+      position:relative;
+      width:600px;
+      height:600px;
+      box-shadow:0 0 50px rgba(0,255,153,0.15);
+    }
+    canvas{
+      display:block;
+      image-rendering:pixelated;
+      border-radius:4px;
+    }
     #ui{position:absolute;inset:0;pointer-events:none;}
     #hud{position:absolute;top:16px;left:16px;}
-    #revenue{font-size:26px;font-weight:700;color:#00ff99;text-shadow:0 0 12px rgba(0,255,153,0.5);font-variant-numeric:tabular-nums;letter-spacing:-0.5px;}
-    #stage-label{font-size:14px;color:#cbd5e1;margin-top:6px;font-weight:700;letter-spacing:0.5px;}
-    #dialog-box{position:absolute;bottom:16px;left:16px;right:16px;background:rgba(10,15,25,0.95);border:2px solid #00ff99;border-radius:8px;padding:16px 20px;box-shadow:0 10px 25px rgba(0,0,0,0.8);}
-    #dialog-speaker{font-size:13px;color:#00ff99;font-weight:700;margin-bottom:6px;text-transform:uppercase;}
-    #dialog-text{font-size:15px;color:#f8fafc;line-height:1.6;font-weight:400;}
-    #controls-hint{position:absolute;top:16px;right:16px;font-size:12px;color:#94a3b8;text-align:right;line-height:1.8;background:rgba(0,0,0,0.5);padding:8px 12px;border-radius:6px;}
-    #start-screen{position:absolute;inset:0;background:rgba(5,10,15,0.95);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;pointer-events:auto;z-index:10;}
-    #start-screen h1{font-size:32px;font-weight:700;color:#00ff99;text-align:center;line-height:1.3;text-shadow:0 0 24px rgba(0,255,153,0.4);}
-    #start-screen p{font-size:15px;color:#94a3b8;text-align:center;max-width:400px;line-height:1.7;}
-    #start-btn{background:#00ff99;color:#050a0f;border:none;border-radius:6px;padding:14px 40px;font-size:18px;font-weight:700;cursor:pointer;font-family:'Satoshi',sans-serif;transition:all .2s;box-shadow:0 4px 15px rgba(0,255,153,0.3);}
-    #start-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,255,153,0.5);}
-    #fps{position:absolute;bottom:12px;right:12px;font:11px monospace;color:#475569;pointer-events:none;}
+    #revenue{
+      font-size:26px;
+      font-weight:700;
+      color:#00ff99;
+      text-shadow:0 0 12px rgba(0,255,153,0.5);
+      font-variant-numeric:tabular-nums;
+      letter-spacing:-0.5px;
+    }
+    #stage-label{
+      font-size:14px;
+      color:#cbd5e1;
+      margin-top:6px;
+      font-weight:700;
+      letter-spacing:0.5px;
+    }
+    #dialog-box{
+      position:absolute;
+      bottom:16px;
+      left:16px;
+      right:16px;
+      background:rgba(10,15,25,0.95);
+      border:2px solid #00ff99;
+      border-radius:8px;
+      padding:16px 20px;
+      box-shadow:0 10px 25px rgba(0,0,0,0.8);
+    }
+    #dialog-speaker{
+      font-size:13px;
+      color:#00ff99;
+      font-weight:700;
+      margin-bottom:6px;
+      text-transform:uppercase;
+    }
+    #dialog-text{
+      font-size:15px;
+      color:#f8fafc;
+      line-height:1.6;
+      font-weight:400;
+    }
+    #controls-hint{
+      position:absolute;
+      top:16px;
+      right:16px;
+      font-size:12px;
+      color:#94a3b8;
+      text-align:right;
+      line-height:1.8;
+      background:rgba(0,0,0,0.5);
+      padding:8px 12px;
+      border-radius:6px;
+    }
+    #start-screen{
+      position:absolute;
+      inset:0;
+      background:rgba(5,10,15,0.95);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:20px;
+      pointer-events:auto;
+      z-index:10;
+    }
+    #start-screen h1{
+      font-size:32px;
+      font-weight:700;
+      color:#00ff99;
+      text-align:center;
+      line-height:1.3;
+      text-shadow:0 0 24px rgba(0,255,153,0.4);
+    }
+    #start-screen p{
+      font-size:15px;
+      color:#94a3b8;
+      text-align:center;
+      max-width:400px;
+      line-height:1.7;
+    }
+    #start-btn{
+      background:#00ff99;
+      color:#050a0f;
+      border:none;
+      border-radius:6px;
+      padding:14px 40px;
+      font-size:18px;
+      font-weight:700;
+      cursor:pointer;
+      font-family:'Satoshi',sans-serif;
+      transition:all .2s;
+      box-shadow:0 4px 15px rgba(0,255,153,0.3);
+    }
+    #start-btn:hover{
+      transform:translateY(-2px);
+      box-shadow:0 6px 20px rgba(0,255,153,0.5);
+    }
+    #fps{
+      position:absolute;
+      bottom:12px;
+      right:12px;
+      font:11px monospace;
+      color:#475569;
+      pointer-events:none;
+    }
   </style>
 </head>
 <body>
@@ -145,7 +253,8 @@ function drawBgDecor(p){
     bld.forEach(([x,y,w,h])=>{
       ctx.fillStyle='#1a0f00'; ctx.fillRect(x,y,w,h);
       ctx.fillStyle='#ffcc6633';
-      for(let r=0;r<5;r++) for(let c=0;c<2;c++) ctx.fillRect(x+10+c*20,y+15+r*35,12,14);
+      for(let r=0;r<5;r++) for(let c=0;c<2;c++)
+        ctx.fillRect(x+10+c*20,y+15+r*35,12,14);
     });
   }else if(d==='engine'){
     ctx.strokeStyle='#3a3a6a'; ctx.lineWidth=2;
@@ -174,7 +283,6 @@ const MASTER_COLORS = { hair:'#94a3b8', skin:'#fcd34d', shirt:'#64748b', pants:'
 
 function drawPixelChar(cx, cy, dir, frame, isPlayer){
   const c = isPlayer ? PLAYER_COLORS : MASTER_COLORS;
-  
   ctx.fillStyle=c.shadow; ctx.beginPath();
   ctx.ellipse(cx,cy+14,16,5,0,0,Math.PI*2); ctx.fill();
 
@@ -184,28 +292,54 @@ function drawPixelChar(cx, cy, dir, frame, isPlayer){
   const legSwing = Math.sin(frame*Math.PI/2)*4;
   const armSwing = Math.sin(frame*Math.PI/2)*5;
 
-  ctx.fillStyle=c.shoes; ctx.fillRect(cx-7,cy+6+legSwing,7,5); ctx.fillRect(cx+2,cy+6-legSwing,7,5);
-  ctx.fillStyle=c.pants; ctx.fillRect(cx-7,cy-5,7,10); ctx.fillRect(cx+2,cy-5,7,10);
-  ctx.fillStyle=c.shirt; ctx.fillRect(cx-10,cy-24,20,20);
-  ctx.fillRect(cx-14,cy-22+armSwing,5,14); ctx.fillRect(cx+10,cy-22-armSwing,5,14);
-  ctx.fillStyle=c.skin; ctx.fillRect(cx-14,cy-8+armSwing,5,5); ctx.fillRect(cx+10,cy-8-armSwing,5,5);
-  
-  ctx.fillRect(cx-9,cy-42,18,18);
-  ctx.fillStyle=c.hair; ctx.fillRect(cx-10,cy-44,20,7); ctx.fillRect(cx-12,cy-42,3,12); ctx.fillRect(cx+9,cy-42,3,10);
-  ctx.fillStyle=c.eye; ctx.fillRect(cx-5,cy-34,4,4); ctx.fillRect(cx+3,cy-34,4,4);
+  ctx.fillStyle=c.shoes;
+  ctx.fillRect(cx-7,cy+6+legSwing,7,5);
+  ctx.fillRect(cx+2,cy+6-legSwing,7,5);
 
-  if(isPlayer){ ctx.fillStyle='#fff'; ctx.fillRect(cx-4,cy-35,2,2); ctx.fillRect(cx+4,cy-35,2,2); }
+  ctx.fillStyle=c.pants;
+  ctx.fillRect(cx-7,cy-5,7,10);
+  ctx.fillRect(cx+2,cy-5,7,10);
+
+  ctx.fillStyle=c.shirt;
+  ctx.fillRect(cx-10,cy-24,20,20);
+  ctx.fillRect(cx-14,cy-22+armSwing,5,14);
+  ctx.fillRect(cx+10,cy-22-armSwing,5,14);
+
+  ctx.fillStyle=c.skin;
+  ctx.fillRect(cx-14,cy-8+armSwing,5,5);
+  ctx.fillRect(cx+10,cy-8-armSwing,5,5);
+
+  ctx.fillRect(cx-9,cy-42,18,18);
+  ctx.fillStyle=c.hair;
+  ctx.fillRect(cx-10,cy-44,20,7);
+  ctx.fillRect(cx-12,cy-42,3,12);
+  ctx.fillRect(cx+9,cy-42,3,10);
+
+  ctx.fillStyle=c.eye;
+  ctx.fillRect(cx-5,cy-34,4,4);
+  ctx.fillRect(cx+3,cy-34,4,4);
+
+  if(isPlayer){
+    ctx.fillStyle='#fff';
+    ctx.fillRect(cx-4,cy-35,2,2);
+    ctx.fillRect(cx+4,cy-35,2,2);
+  }
   ctx.restore();
 }
 
 function drawMaster(){
   const m=state.master;
   drawPixelChar(m.x,m.y,0,0,false);
-  ctx.fillStyle='rgba(0,0,0,.7)'; ctx.beginPath(); ctx.roundRect(m.x-36,m.y-70,72,20,4); ctx.fill();
+  ctx.fillStyle='rgba(0,0,0,.7)';
+  ctx.beginPath();
+  ctx.roundRect(m.x-36,m.y-70,72,20,4); ctx.fill();
   renderText('박사님', m.x, m.y-56, 12, '#00ff99', 'center', true);
 
   if(Math.hypot(state.player.x-m.x, state.player.y-m.y) < INTERACT_DIST){
-    ctx.fillStyle='rgba(0,255,153,.2)'; ctx.beginPath(); ctx.ellipse(m.x,m.y+14,24,8,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='rgba(0,255,153,.2)';
+    ctx.beginPath();
+    ctx.ellipse(m.x,m.y+14,24,8,0,0,Math.PI*2);
+    ctx.fill();
     renderText('[SPACE] 대화', m.x, m.y-78, 11, '#00ff99', 'center', true);
   }
 }
@@ -218,14 +352,26 @@ function drawMonster(){
   const bx=mon.x+Math.sin(mon.shake*15)*mon.shake*10;
   const by=mon.y+Math.sin(t)*6; 
 
-  ctx.fillStyle='#00000044'; ctx.beginPath(); ctx.ellipse(bx,by+35,30,8,0,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle='#ef4444'; ctx.beginPath(); ctx.ellipse(bx,by,32,28,0,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle='#fca5a5'; ctx.beginPath(); ctx.ellipse(bx-10,by-10,12,8,-.4,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#00000044';
+  ctx.beginPath(); ctx.ellipse(bx,by+35,30,8,0,0,Math.PI*2); ctx.fill();
+
+  ctx.fillStyle='#ef4444';
+  ctx.beginPath(); ctx.ellipse(bx,by,32,28,0,0,Math.PI*2); ctx.fill();
+
+  ctx.fillStyle='#fca5a5';
+  ctx.beginPath(); ctx.ellipse(bx-10,by-10,12,8,-.4,0,Math.PI*2); ctx.fill();
   
-  ctx.fillStyle='#0f172a'; ctx.beginPath(); ctx.arc(bx-12,by-6,6,0,Math.PI*2); ctx.fill(); ctx.arc(bx+12,by-6,6,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle='#fff'; ctx.fillRect(bx-14,by-8,3,3); ctx.fillRect(bx+10,by-8,3,3);
+  ctx.fillStyle='#0f172a';
+  ctx.beginPath(); ctx.arc(bx-12,by-6,6,0,Math.PI*2); ctx.fill();
+  ctx.arc(bx+12,by-6,6,0,Math.PI*2); ctx.fill();
+
+  ctx.fillStyle='#fff';
+  ctx.fillRect(bx-14,by-8,3,3);
+  ctx.fillRect(bx+10,by-8,3,3);
   
-  ctx.strokeStyle='#0f172a'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(bx,by+8,12,0.1,Math.PI-.1); ctx.stroke();
+  ctx.strokeStyle='#0f172a';
+  ctx.lineWidth=3;
+  ctx.beginPath(); ctx.arc(bx,by+8,12,0.1,Math.PI-.1); ctx.stroke();
 
   renderText('대형 키워드 몬스터', bx, by-40, 12, '#ef4444', 'center', true);
 
@@ -236,12 +382,12 @@ function drawMonster(){
 
 // ── 상호작용 타겟(게임 요소) 렌더링 ─────────────────────
 const targetConfigs = {
-  fishing: { emoji: '🎣', color: '#38bdf8', label: '낚싯대 투척 구역' },
-  dataroom: { emoji: '💻', color: '#a855f7', label: '데이터 분석 단말기' },
+  fishing:      { emoji: '🎣', color: '#38bdf8', label: '낚싯대 투척 구역' },
+  dataroom:     { emoji: '💻', color: '#a855f7', label: '데이터 분석 단말기' },
   construction: { emoji: '🚧', color: '#f59e0b', label: '트래픽 설계 도면' },
-  engine: { emoji: '⚙️', color: '#ef4444', label: '광고 가속 엔진' },
-  cpa: { emoji: '🎯', color: '#22c55e', label: 'CPA 타겟' },
-  stamp: { emoji: '⭐', color: '#eab308', label: 'Pre-sell 검증 / 로그아웃' }
+  engine:       { emoji: '⚙️', color: '#ef4444', label: '광고 가속 엔진' },
+  cpa:          { emoji: '🎯', color: '#22c55e', label: 'CPA 타겟' },
+  stamp:        { emoji: '⭐', color: '#eab308', label: 'Pre-sell 검증 / 로그아웃' }
 };
 
 function drawTargetObject(){
@@ -251,29 +397,25 @@ function drawTargetObject(){
   const conf = targetConfigs[t.type];
   if(!conf) return;
 
-  const pulse = Math.sin(Date.now()/200)*0.1 + 1; // 호흡하는 크기 효과
+  const pulse = Math.sin(Date.now()/200)*0.1 + 1;
   
   ctx.save();
   ctx.translate(t.x, t.y);
   
-  // 빛나는 효과
   ctx.globalAlpha = 0.3;
   ctx.fillStyle = conf.color;
   ctx.beginPath(); ctx.arc(0, 0, 30 * pulse, 0, Math.PI*2); ctx.fill();
   
-  // 이모지 렌더링
   ctx.globalAlpha = 1;
   ctx.font = '36px sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(conf.emoji, 0, 0);
   
-  // 레이블
   renderText(conf.label, 0, -40, 11, conf.color, 'center', true);
 
   ctx.restore();
 
-  // 상호작용 UI
   if(Math.hypot(state.player.x-t.x, state.player.y-t.y) < INTERACT_DIST){
     renderText(`[SPACE] ${conf.label} 작동`, t.x, t.y-55, 12, '#fff', 'center', true);
   }
@@ -295,15 +437,16 @@ function render(){
   const sx=(Math.random()-.5)*state.camShake*8;
   const sy=(Math.random()-.5)*state.camShake*8;
   ctx.save();
-  if(state.camShake>0){ ctx.translate(sx,sy); state.camShake=Math.max(0,state.camShake-0.1); }
+  if(state.camShake>0){
+    ctx.translate(sx,sy);
+    state.camShake=Math.max(0,state.camShake-0.1);
+  }
 
   drawBackground();
-  drawTargetObject(); // 스코어를 올려주는 실질적 게임 요소
+  drawTargetObject();
   drawMaster();
   drawMonster();
-  
   drawPixelChar(state.player.x, state.player.y, state.player.dir, state.player.frame, true);
-
   drawFlash();
   ctx.restore();
 }
@@ -316,46 +459,58 @@ function update(dt){
   const pl=state.player;
   let moved=false;
 
-  if(Input.keys['ArrowLeft']||Input.keys['KeyA']){ pl.x=Math.max(20,pl.x-SPEED*dt); pl.dir=1; moved=true; }
-  else if(Input.keys['ArrowRight']||Input.keys['KeyD']){ pl.x=Math.min(W-20,pl.x+SPEED*dt); pl.dir=0; moved=true; }
-  if(Input.keys['ArrowUp']||Input.keys['KeyW']){ pl.y=Math.max(100,pl.y-SPEED*dt); moved=true; }
-  else if(Input.keys['ArrowDown']||Input.keys['KeyS']){ pl.y=Math.min(540,pl.y+SPEED*dt); moved=true; }
+  if(Input.keys['ArrowLeft']||Input.keys['KeyA']){
+    pl.x=Math.max(20,pl.x-SPEED*dt); pl.dir=1; moved=true;
+  } else if(Input.keys['ArrowRight']||Input.keys['KeyD']){
+    pl.x=Math.min(W-20,pl.x+SPEED*dt); pl.dir=0; moved=true;
+  }
+  if(Input.keys['ArrowUp']||Input.keys['KeyW']){
+    pl.y=Math.max(100,pl.y-SPEED*dt); moved=true;
+  } else if(Input.keys['ArrowDown']||Input.keys['KeyS']){
+    pl.y=Math.min(540,pl.y+SPEED*dt); moved=true;
+  }
 
   if(moved){
     pl.frameTimer+=dt;
-    if(pl.frameTimer>0.1){ pl.frame=(pl.frame+1)%4; pl.frameTimer=0; }
-  } else { pl.frame=0; pl.frameTimer=0; }
+    if(pl.frameTimer>0.1){
+      pl.frame=(pl.frame+1)%4;
+      pl.frameTimer=0;
+    }
+  } else {
+    pl.frame=0;
+    pl.frameTimer=0;
+  }
 
   if(Input.justPressed['Space']) handleInteraction();
 
-  if(state.monster.shake>0) state.monster.shake=Math.max(0,state.monster.shake-3*dt);
+  if(state.monster.shake>0)
+    state.monster.shake=Math.max(0,state.monster.shake-3*dt);
+
   Input.justPressed={};
 }
 
-// ── 분리된 상호작용 로직 (대화 vs 행동) ────────────────────
+// ── 분리된 상호작용 로직 ───────────────────────────
 function handleInteraction(){
   const pl=state.player;
   
-  // 1. 박사님과의 거리 확인 (가르침만 줌, 점수 안 오름)
   if(Math.hypot(pl.x-state.master.x, pl.y-state.master.y) < INTERACT_DIST){
     triggerMasterDialogue();
-    return; // 대화 시 행동 무시
+    return;
   }
 
-  // 2. 몬스터(가짜 노력)와의 거리 확인 (Stage 2)
-  if(state.stage===2 && state.monster.alive && Math.hypot(pl.x-state.monster.x, pl.y-state.monster.y) < INTERACT_DIST+20){
+  if(state.stage===2 && state.monster.alive &&
+     Math.hypot(pl.x-state.monster.x, pl.y-state.monster.y) < INTERACT_DIST+20){
     attackMonster();
     return;
   }
 
-  // 3. 맵 오브젝트(돈 버는 시스템)와의 거리 확인
   const t=state.targetObj;
   if(t.active && Math.hypot(pl.x-t.x, pl.y-t.y) < INTERACT_DIST){
     executeSystemAction();
   }
 }
 
-// 스승은 방향만 가리킨다 (Score 변동 없음)
+// ── 대사 ───────────────────────────────────────────
 function triggerMasterDialogue(){
   const msgs = {
     1: "무작정 글을 쓰지 마라. 저기 호숫가(🎣)로 가서 낚싯대를 던져 시장의 반응을 보게.",
@@ -369,62 +524,73 @@ function triggerMasterDialogue(){
   setDialog('박사님', msgs[state.stage]);
 }
 
-// 플레이어가 직접 시스템을 가동하여 수익을 냄
+// ── 시스템 행동 ────────────────────────────────────
 function executeSystemAction(){
   switch(state.stage){
     case 1:
       state.score += 0.01;
-      setDialog('시스템 알림', `낚싯대를 던져 반응을 테스트합니다. 현재 수익: $${state.score.toFixed(2)}`);
+      setDialog('시스템 알림',
+        `낚싯대를 던져 반응을 테스트합니다. 현재 수익: $${state.score.toFixed(2)}`);
       if(state.score >= 0.05){
         advanceStage(2, '대형 키워드의 함정', 'fishing');
-        state.targetObj.active = false; // 낚싯대 비활성화
+        state.targetObj.active = false;
         state.monster = { x: 450, y: 350, alive: true, shake: 0, hits: 0 };
-        setDialog('박사님', "1만 검색량 키워드가 나타났다! 직접 부딪혀 그 한계를 확인하게.");
+        setDialog('박사님',
+          "1만 검색량 키워드가 나타났다! 직접 부딪혀 그 한계를 확인하게.");
         flashAlpha = 0.3;
       }
       break;
     case 3:
       state.score += 10;
-      setDialog('데이터 분석', `O/X를 가려내어 타겟을 좁힙니다. 현재 수익: $${state.score.toFixed(2)}`);
+      setDialog('데이터 분석',
+        `O/X를 가려내어 타겟을 좁힙니다. 현재 수익: $${state.score.toFixed(2)}`);
       if(state.score >= 50){
         advanceStage(4, '마트 설계 (마케터 전직)', 'construction');
         state.targetObj = { x: 200, y: 400, type: 'construction', active: true };
-        setDialog('시스템 알림', "데이터 검증 완료. 트래픽 입구 설계를 시작합니다.");
+        setDialog('시스템 알림',
+          "데이터 검증 완료. 트래픽 입구 설계를 시작합니다.");
         flashAlpha = 0.3;
       }
       break;
     case 4:
       state.score += 100;
-      setDialog('트래픽 설계', `종량제 지도 등 쉬운 유입 입구를 세팅합니다. 현재 수익: $${state.score.toFixed(2)}`);
+      setDialog('트래픽 설계',
+        `종량제 지도 등 쉬운 유입 입구를 세팅합니다. 현재 수익: $${state.score.toFixed(2)}`);
       if(state.score >= 500){
         advanceStage(5, '시간 복사 (유료 레버리지)', 'engine');
         state.targetObj = { x: 450, y: 250, type: 'engine', active: true };
-        setDialog('시스템 알림', "입구 설계 완료. 시간 복사 엔진을 가동하십시오.");
+        setDialog('시스템 알림',
+          "입구 설계 완료. 시간 복사 엔진을 가동하십시오.");
         flashAlpha = 0.3;
       }
       break;
     case 5:
       state.score += 1000;
-      setDialog('광고 엔진 가동', `소액 광고비로 수개월치 데이터를 치환합니다. 현재 수익: $${state.score.toFixed(2)}`);
+      setDialog('광고 엔진 가동',
+        `소액 광고비로 수개월치 데이터를 치환합니다. 현재 수익: $${state.score.toFixed(2)}`);
       if(state.score >= 3000){
-        advanceStage(6, 'CPA 가치 연결', 'engine'); // 같은 엔진룸 배경 유지
+        advanceStage(6, 'CPA 가치 연결', 'engine');
         state.targetObj = { x: 150, y: 350, type: 'cpa', active: true };
-        setDialog('시스템 알림', "트래픽이 폭발합니다. 유입된 트래픽을 고단가 CPA로 연결하십시오.");
+        setDialog('시스템 알림',
+          "트래픽이 폭발합니다. 유입된 트래픽을 고단가 CPA로 연결하십시오.");
         flashAlpha = 0.3;
       }
       break;
     case 6:
       state.score += 5000;
-      setDialog('수익 파이프라인 작동', `이사/폐기물 CPA로 마진을 극대화합니다. 현재 수익: $${state.score.toFixed(2)}`);
+      setDialog('수익 파이프라인 작동',
+        `이사/폐기물 CPA로 마진을 극대화합니다. 현재 수익: $${state.score.toFixed(2)}`);
       if(state.score >= 10000){
         advanceStage(7, '계단식 성장 완료', 'meadow');
         state.targetObj = { x: 400, y: 300, type: 'stamp', active: true };
-        setDialog('시스템 알림', "시스템 무한동력 완성. 마지막 Pre-sell 검증 후 로그아웃 하십시오.");
+        setDialog('시스템 알림',
+          "시스템 무한동력 완성. 마지막 Pre-sell 검증 후 로그아웃 하십시오.");
         flashAlpha = 0.5;
       }
       break;
     case 7:
-      setDialog('시스템 알림', "모든 시스템의 통제권을 확보했습니다. 로그아웃을 진행합니다...");
+      setDialog('시스템 알림',
+        "모든 시스템의 통제권을 확보했습니다. 로그아웃을 진행합니다...");
       setTimeout(()=> { state.phase='end'; showEndScreen(); }, 2000);
       break;
   }
@@ -438,15 +604,18 @@ function attackMonster(){
   state.monster.hits += 1;
   
   if(state.monster.hits < 3){
-    setDialog('대형 키워드 몬스터', `[데미지 0] 데이터 없는 네 노가다는 내 HP를 깎을 수 없다! (타격 횟수: ${state.monster.hits}/3)`);
+    setDialog('대형 키워드 몬스터',
+      `[데미지 0] 데이터 없는 네 노가다는 내 HP를 깎을 수 없다! (타격 횟수: ${state.monster.hits}/3)`);
   } else {
-    setDialog('시스템 알림', "가짜 노력의 한계를 체감했습니다. 데이터 기반 전략으로 전환합니다.");
+    setDialog('시스템 알림',
+      "가짜 노력의 한계를 체감했습니다. 데이터 기반 전략으로 전환합니다.");
     flashAlpha = 0.6;
     setTimeout(()=>{
       advanceStage(3, '마켓 데이터 룸 (Pretotype)', 'dataroom');
       state.monster.alive = false;
       state.targetObj = { x: 450, y: 250, type: 'dataroom', active: true };
-      setDialog('박사님', "잘 깨달았네. 이제 저기 있는 단말기(💻)로 가서 내 머리가 아닌 데이터를 믿게.");
+      setDialog('박사님',
+        "잘 깨달았네. 이제 저기 있는 단말기(💻)로 가서 내 머리가 아닌 데이터를 믿게.");
     }, 1500);
   }
 }
@@ -454,23 +623,30 @@ function attackMonster(){
 function advanceStage(newStage, labelTxt, newBg){
   state.stage = newStage;
   state.bgDecor = newBg;
-  document.getElementById('stage-label').textContent = `STAGE ${newStage}: ${labelTxt}`;
+  document.getElementById('stage-label').textContent =
+    `STAGE ${newStage}: ${labelTxt}`;
 }
 
 // ── UI 컨트롤 ─────────────────────────────────────
 function setDialog(speaker, txt){
-  document.getElementById('dialog-speaker').textContent = speaker;
-  document.getElementById('dialog-speaker').style.color = speaker==='박사님' ? '#00ff99' : (speaker.includes('몬스터') ? '#ef4444' : '#38bdf8');
+  const el = document.getElementById('dialog-speaker');
+  el.textContent = speaker;
+  el.style.color =
+    speaker==='박사님' ? '#00ff99' :
+    (speaker.includes('몬스터') ? '#ef4444' : '#38bdf8');
   document.getElementById('dialog-text').textContent = txt;
 }
+
 function updateRevenue(){
-  document.getElementById('revenue').textContent='REVENUE: $'+state.score.toLocaleString('en-US',{minimumFractionDigits:2});
+  document.getElementById('revenue').textContent =
+    'REVENUE: $'+state.score.toLocaleString('en-US',{minimumFractionDigits:2});
 }
 
 function showEndScreen(){
   const el=document.createElement('div');
   el.id='end-screen';
-  el.style.cssText=`position:absolute;inset:0;background:rgba(5,10,15,0.95);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;pointer-events:auto;z-index:100;`;
+  el.style.cssText=
+    'position:absolute;inset:0;background:rgba(5,10,15,0.95);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;pointer-events:auto;z-index:100;';
   el.innerHTML=`
     <div style="font-size:56px; text-shadow:0 0 20px rgba(234,179,8,0.5);">⭐</div>
     <h1 style="font-size:32px;font-weight:700;color:#00ff99;text-align:center;">안정적 연금형 수익 달성</h1>
@@ -478,7 +654,10 @@ function showEndScreen(){
       최종 수익: <strong style="color:#00ff99;font-size:20px;">$${state.score.toLocaleString()}</strong><br>
       가르침을 듣는 것에서 멈추지 않고, 직접 시스템을 가동한 마케터의 승리입니다.
     </p>
-    <button onclick="location.reload()" style="background:#00ff99;color:#050a0f;border:none;border-radius:6px;padding:12px 32px;font-size:16px;font-weight:700;cursor:pointer;font-family:'Satoshi',sans-serif;margin-top:10px;">다시 증명하기</button>
+    <button onclick="location.reload()"
+      style="background:#00ff99;color:#050a0f;border:none;border-radius:6px;padding:12px 32px;font-size:16px;font-weight:700;cursor:pointer;font-family:'Satoshi',sans-serif;margin-top:10px;">
+      다시 증명하기
+    </button>
   `;
   document.getElementById('wrap').appendChild(el);
 }
