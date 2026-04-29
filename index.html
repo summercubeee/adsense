@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8"/>
   <title>본질센스 RPG: 기술 · 만체리 · 사업화·고수익화 · 코어</title>
-  //api.fontshare.com/v2/css?f[]=satoshi@400,700&display=swap" rel="stylesheet">
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,700&display=swap" rel="stylesheet">
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
+    html,body{width:100%;height:100%}
     body{
       background:#0a0a0f;
       display:flex;
       justify-content:center;
       align-items:center;
-      height:100vh;
       overflow:hidden;
       font-family:'Satoshi',sans-serif;
     }
@@ -20,10 +20,20 @@
       width:600px;
       height:600px;
       box-shadow:0 0 50px rgba(0,255,153,0.15);
+      background:#000;
     }
     canvas{display:block;image-rendering:pixelated;border-radius:4px}
-    #ui{position:absolute;inset:0;pointer-events:none}
-    #hud{position:absolute;top:16px;left:16px}
+    /* UI 전체는 클릭 막지 않게 */
+    #ui{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+    }
+    #hud{
+      position:absolute;
+      top:16px;
+      left:16px;
+    }
     #revenue{
       font-size:26px;font-weight:700;color:#00ff99;
       text-shadow:0 0 12px rgba(0,255,153,0.5);
@@ -54,10 +64,21 @@
       text-align:right;line-height:1.8;background:rgba(0,0,0,0.5);
       padding:8px 12px;border-radius:6px;
     }
+    #fps{
+      position:absolute;bottom:12px;right:12px;font:11px monospace;color:#475569;pointer-events:none;
+    }
+    /* 스타트 화면은 클릭 가능하게 */
     #start-screen{
-      position:absolute;inset:0;background:rgba(5,10,15,0.95);
-      display:flex;flex-direction:column;align-items:center;justify-content:center;
-      gap:20px;pointer-events:auto;z-index:10;
+      position:absolute;
+      inset:0;
+      background:rgba(5,10,15,0.95);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:20px;
+      z-index:10;
+      pointer-events:auto;
     }
     #start-screen h1{
       font-size:32px;font-weight:700;color:#00ff99;text-align:center;
@@ -71,25 +92,24 @@
       padding:14px 40px;font-size:18px;font-weight:700;cursor:pointer;
       font-family:'Satoshi',sans-serif;transition:all .2s;
       box-shadow:0 4px 15px rgba(0,255,153,0.3);
+      pointer-events:auto;
     }
     #start-btn:hover{
       transform:translateY(-2px);
       box-shadow:0 6px 20px rgba(0,255,153,0.5);
     }
-    #fps{
-      position:absolute;bottom:12px;right:12px;font:11px monospace;color:#475569;pointer-events:none;
-    }
   </style>
 </head>
 <body>
 <div id="wrap">
-  anvas id="c" width="600" height="600"></canvas>
+  <canvas id="c" width="600" height="600"></canvas>
+
   <div id="ui">
     <div id="hud">
       <div id="revenue">REVENUE: $0.00</div>
       <div id="stage-label">STAGE 1: 기술 - 뺑뺑이 · 전면 광고 · 소제목 밑 광고</div>
       <div id="meta-label">수: 0 | 단가: $1.00 | 잠재 트래픽: 0 | 노출 가능성: 0 | 유입 사유: 0
-코어(Core): 0 | 근본 원리: 0</div>
+코어(Core): 0 | 근본 원리: 0 (가격×수 이해도)</div>
     </div>
 
     <div id="controls-hint">
@@ -115,664 +135,225 @@
 </div>
 
 <script>
-// ───────────────── 상수 / 상태 ─────────────────
-const W = 600, H = 600;
-const SPEED = 180;
-const INTERACT_DIST = 72;
+const W=600,H=600,SPEED=180,INTERACT_DIST=72;
+const canvas=document.getElementById('c');
+const ctx=canvas.getContext('2d');
+ctx.imageSmoothingEnabled=false;
 
-const canvas = document.getElementById('c');
-const ctx = canvas.getContext('2d');
-ctx.imageSmoothingEnabled = false;
-
-const state = {
-  phase: 'start',
-  stage: 1,
-  score: 0,
-  traffic: 0,
-  cpc: 1.0,
-  keywordPotential: 0,
-  exposureScore: 0,
-  clickAppeal: 0,
-  core: 0,
-  principle: 0,
-  player: { x: 300, y: 470, dir: 0, frame: 0, frameTimer: 0 },
-  master: { x: 300, y: 120 },
-  monster: { x: -200, y: -200, alive: false, shake: 0, hits: 0 },
-  bgDecor: 'construction',
-  camShake: 0,
-  targets: []
+const state={
+  phase:'start',
+  stage:1,
+  score:0,
+  traffic:0,
+  cpc:1.0,
+  keywordPotential:0,
+  exposureScore:0,
+  clickAppeal:0,
+  core:0,
+  principle:0,
+  player:{x:300,y:470,dir:0,frame:0,frameTimer:0},
+  master:{x:300,y:120},
+  monster:{x:-200,y:-200,alive:false,shake:0,hits:0},
+  bgDecor:'construction',
+  camShake:0,
+  targets:[]
 };
 
-const Input = { keys:{}, justPressed:{} };
-document.addEventListener('keydown', e=>{
-  if(!Input.keys[e.code]) Input.justPressed[e.code] = true;
-  Input.keys[e.code] = true;
-  if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Space','KeyA','KeyD','KeyW','KeyS'].includes(e.code)) e.preventDefault();
+const Input={keys:{},justPressed:{}};
+document.addEventListener('keydown',e=>{
+  if(!Input.keys[e.code]) Input.justPressed[e.code]=true;
+  Input.keys[e.code]=true;
 });
-document.addEventListener('keyup', e=>{ Input.keys[e.code] = false; });
+document.addEventListener('keyup',e=>{Input.keys[e.code]=false;});
 
-// ───────────────── 배경 ─────────────────
-const bgPalettes = {
-  construction: { sky:'#2a1a0a', ground:'#3a2a1a', accent:'#5c3b1e' },
-  dataroom:     { sky:'#0a0f1a', ground:'#0f1f2f', accent:'#1b2f4d' },
-  engine:       { sky:'#0f0f18', ground:'#181830', accent:'#2a2a50' },
-  meadow:       { sky:'#1a3020', ground:'#2a4a2a', accent:'#3a6040' }
+const bgPalettes={
+  construction:{sky:'#2a1a0a',ground:'#3a2a1a',accent:'#5c3b1e'},
+  dataroom:{sky:'#0a0f1a',ground:'#0f1f2f',accent:'#1b2f4d'},
+  engine:{sky:'#0f0f18',ground:'#181830',accent:'#2a2a50'},
+  meadow:{sky:'#1a3020',ground:'#2a4a2a',accent:'#3a6040'}
 };
-
-function drawRect(x,y,w,h,col,a=1){ ctx.globalAlpha=a; ctx.fillStyle=col; ctx.fillRect(x,y,w,h); ctx.globalAlpha=1; }
-function drawRoundRect(x,y,w,h,r,col,a=1){ ctx.globalAlpha=a; ctx.fillStyle=col; ctx.beginPath(); ctx.roundRect(x,y,w,h,r); ctx.fill(); ctx.globalAlpha=1; }
+function drawRect(x,y,w,h,col,a=1){ctx.globalAlpha=a;ctx.fillStyle=col;ctx.fillRect(x,y,w,h);ctx.globalAlpha=1;}
+function drawRoundRect(x,y,w,h,r,col,a=1){ctx.globalAlpha=a;ctx.fillStyle=col;ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill();ctx.globalAlpha=1;}
 function renderText(txt,x,y,size,col,align='center',bold=false){
-  ctx.fillStyle=col; ctx.textAlign=align;
+  ctx.fillStyle=col;ctx.textAlign=align;
   ctx.font=`${bold?'bold ':''}${size}px Satoshi, sans-serif`;
   ctx.fillText(txt,x,y);
 }
-
 function drawBackground(){
-  const p = bgPalettes[state.bgDecor] || bgPalettes.construction;
+  const p=bgPalettes[state.bgDecor]||bgPalettes.construction;
   drawRect(0,0,W,H*0.55,p.sky);
-  const grad = ctx.createLinearGradient(0,H*0.45,0,H*0.65);
-  grad.addColorStop(0,p.accent); grad.addColorStop(1,p.ground);
-  ctx.fillStyle=grad; ctx.fillRect(0,H*0.45,W,H*0.2);
+  const grad=ctx.createLinearGradient(0,H*0.45,0,H*0.65);
+  grad.addColorStop(0,p.accent);grad.addColorStop(1,p.ground);
+  ctx.fillStyle=grad;ctx.fillRect(0,H*0.45,W,H*0.2);
   drawRect(0,H*0.62,W,H*0.38,p.ground);
   drawBgDecor();
 }
-
 function drawBgDecor(){
-  const d = state.bgDecor;
+  const d=state.bgDecor;
   ctx.save();
   if(d==='construction'){
     const bld=[[40,180,90,270],[160,130,70,330],[260,160,100,300],[400,100,80,360],[510,180,60,280]];
     bld.forEach(([x,y,w,h])=>{
-      ctx.fillStyle='#1a0f00'; ctx.fillRect(x,y,w,h);
+      ctx.fillStyle='#1a0f00';ctx.fillRect(x,y,w,h);
       ctx.fillStyle='#ffcc6633';
-      for(let r=0;r<5;r++) for(let c=0;c<2;c++) ctx.fillRect(x+10+c*20,y+15+r*35,12,14);
+      for(let r=0;r<5;r++)for(let c=0;c<2;c++)ctx.fillRect(x+10+c*20,y+15+r*35,12,14);
     });
   }else if(d==='dataroom'){
     for(let i=0;i<4;i++){
       drawRoundRect(60+i*130,160,80,180,4,'#111a2a');
       for(let j=0;j<7;j++){
-        ctx.fillStyle = Math.random()>.4 ? '#22c55e' : '#1a3a2a';
+        ctx.fillStyle=Math.random()>.4?'#22c55e':'#1a3a2a';
         ctx.fillRect(70+i*130,175+j*24,10,8);
       }
     }
   }else if(d==='engine'){
-    ctx.strokeStyle='#3a3a6a'; ctx.lineWidth=2;
-    for(let i=0;i<5;i++){ ctx.beginPath(); ctx.moveTo(i*130,0); ctx.lineTo(i*130,H); ctx.stroke(); }
-    for(let j=0;j<5;j++){ ctx.beginPath(); ctx.moveTo(0,j*130); ctx.lineTo(W,j*130); ctx.stroke(); }
-    [[160,220],[420,300],[280,380]].forEach(([cx,cy])=>{
-      ctx.strokeStyle='#5050aa77'; ctx.lineWidth=3;
-      ctx.beginPath(); ctx.arc(cx,cy,45,0,Math.PI*2); ctx.stroke();
-      ctx.beginPath(); ctx.arc(cx,cy,20,0,Math.PI*2); ctx.stroke();
-    });
+    ctx.strokeStyle='#3a3a6a';ctx.lineWidth=2;
+    for(let i=0;i<5;i++){ctx.beginPath();ctx.moveTo(i*130,0);ctx.lineTo(i*130,H);ctx.stroke();}
+    for(let j=0;j<5;j++){ctx.beginPath();ctx.moveTo(0,j*130);ctx.lineTo(W,j*130);ctx.stroke();}
   }else if(d==='meadow'){
     ctx.fillStyle='#3a8040';
     for(let i=0;i<40;i++){
-      const gx=60+i*14, gy=H*0.6+Math.sin(i)*8;
+      const gx=60+i*14,gy=H*0.6+Math.sin(i)*8;
       ctx.fillRect(gx,gy,4,12+Math.abs(Math.sin(i*2))*10);
     }
-    ctx.fillStyle='#ffdd44aa'; ctx.beginPath(); ctx.arc(500,100,40,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle='#ffcc2244'; ctx.beginPath(); ctx.arc(500,100,60,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#ffdd44aa';ctx.beginPath();ctx.arc(500,100,40,0,Math.PI*2);ctx.fill();
   }
   ctx.restore();
 }
-
-// ───────────────── 캐릭터 ─────────────────
-const PLAYER_COLORS = { hair:'#1e293b', skin:'#fcd34d', shirt:'#0ea5e9', pants:'#0f172a', shoes:'#020617', eye:'#0f172a', shadow:'#00000055' };
-const MASTER_COLORS = { hair:'#94a3b8', skin:'#fcd34d', shirt:'#64748b', pants:'#334155', shoes:'#0f172a', eye:'#f8fafc', shadow:'#00000055' };
-
+const PLAYER_COLORS={hair:'#1e293b',skin:'#fcd34d',shirt:'#0ea5e9',pants:'#0f172a',shoes:'#020617',eye:'#0f172a',shadow:'#00000055'};
+const MASTER_COLORS={hair:'#94a3b8',skin:'#fcd34d',shirt:'#64748b',pants:'#334155',shoes:'#0f172a',eye:'#f8fafc',shadow:'#00000055'};
 function drawPixelChar(cx,cy,dir,frame,isPlayer){
-  const c = isPlayer ? PLAYER_COLORS : MASTER_COLORS;
-  ctx.fillStyle=c.shadow;
-  ctx.beginPath(); ctx.ellipse(cx,cy+14,16,5,0,0,Math.PI*2); ctx.fill();
-
+  const c=isPlayer?PLAYER_COLORS:MASTER_COLORS;
+  ctx.fillStyle=c.shadow;ctx.beginPath();ctx.ellipse(cx,cy+14,16,5,0,0,Math.PI*2);ctx.fill();
   ctx.save();
-  if(dir===1){ ctx.translate(cx,cy); ctx.scale(-1,1); ctx.translate(-cx,-cy); }
-
-  const legSwing = Math.sin(frame*Math.PI/2)*4;
-  const armSwing = Math.sin(frame*Math.PI/2)*5;
-
+  if(dir===1){ctx.translate(cx,cy);ctx.scale(-1,1);ctx.translate(-cx,-cy);}
+  const legSwing=Math.sin(frame*Math.PI/2)*4;
+  const armSwing=Math.sin(frame*Math.PI/2)*5;
   ctx.fillStyle=c.shoes;
-  ctx.fillRect(cx-7,cy+6+legSwing,7,5);
-  ctx.fillRect(cx+2,cy+6-legSwing,7,5);
-
+  ctx.fillRect(cx-7,cy+6+legSwing,7,5);ctx.fillRect(cx+2,cy+6-legSwing,7,5);
   ctx.fillStyle=c.pants;
-  ctx.fillRect(cx-7,cy-5,7,10);
-  ctx.fillRect(cx+2,cy-5,7,10);
-
+  ctx.fillRect(cx-7,cy-5,7,10);ctx.fillRect(cx+2,cy-5,7,10);
   ctx.fillStyle=c.shirt;
   ctx.fillRect(cx-10,cy-24,20,20);
   ctx.fillRect(cx-14,cy-22+armSwing,5,14);
   ctx.fillRect(cx+10,cy-22-armSwing,5,14);
-
   ctx.fillStyle=c.skin;
   ctx.fillRect(cx-14,cy-8+armSwing,5,5);
   ctx.fillRect(cx+10,cy-8-armSwing,5,5);
-
   ctx.fillRect(cx-9,cy-42,18,18);
   ctx.fillStyle=c.hair;
   ctx.fillRect(cx-10,cy-44,20,7);
-  ctx.fillRect(cx-12,cy-42,3,12);
-  ctx.fillRect(cx+9,cy-42,3,10);
-
+  ctx.fillRect(cx-12,cy-42,3,12);ctx.fillRect(cx+9,cy-42,3,10);
   ctx.fillStyle=c.eye;
-  ctx.fillRect(cx-5,cy-34,4,4);
-  ctx.fillRect(cx+3,cy-34,4,4);
-
+  ctx.fillRect(cx-5,cy-34,4,4);ctx.fillRect(cx+3,cy-34,4,4);
   if(isPlayer){
     ctx.fillStyle='#fff';
-    ctx.fillRect(cx-4,cy-35,2,2);
-    ctx.fillRect(cx+4,cy-35,2,2);
+    ctx.fillRect(cx-4,cy-35,2,2);ctx.fillRect(cx+4,cy-35,2,2);
   }
   ctx.restore();
 }
-
 function drawMaster(){
   const m=state.master;
   drawPixelChar(m.x,m.y,0,0,false);
   ctx.fillStyle='rgba(0,0,0,.7)';
-  ctx.beginPath(); ctx.roundRect(m.x-36,m.y-70,72,20,4); ctx.fill();
-  renderText('박사님', m.x, m.y-56, 12, '#00ff99', 'center', true);
-
-  if(Math.hypot(state.player.x-m.x, state.player.y-m.y) < INTERACT_DIST){
-    ctx.fillStyle='rgba(0,255,153,.2)';
-    ctx.beginPath(); ctx.ellipse(m.x,m.y+14,24,8,0,0,Math.PI*2); ctx.fill();
-    renderText('[SPACE] 대화', m.x, m.y-78, 11, '#00ff99', 'center', true);
-  }
+  ctx.beginPath();ctx.roundRect(m.x-36,m.y-70,72,20,4);ctx.fill();
+  renderText('박사님',m.x,m.y-56,12,'#00ff99','center',true);
 }
-
-function drawMonster(){
-  const mon=state.monster;
-  if(!mon.alive) return;
-  const t=Date.now()/400;
-  const bx = mon.x + Math.sin(mon.shake*15)*mon.shake*10;
-  const by = mon.y + Math.sin(t)*6;
-
-  ctx.fillStyle='#00000044';
-  ctx.beginPath(); ctx.ellipse(bx,by+35,30,8,0,0,Math.PI*2); ctx.fill();
-
-  ctx.fillStyle='#ef4444';
-  ctx.beginPath(); ctx.ellipse(bx,by,32,28,0,0,Math.PI*2); ctx.fill();
-
-  ctx.fillStyle='#fca5a5';
-  ctx.beginPath(); ctx.ellipse(bx-10,by-10,12,8,-.4,0,Math.PI*2); ctx.fill();
-
-  ctx.fillStyle='#0f172a';
-  ctx.beginPath(); ctx.arc(bx-12,by-6,6,0,Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.arc(bx+12,by-6,6,0,Math.PI*2); ctx.fill();
-
-  ctx.fillStyle='#fff';
-  ctx.fillRect(bx-14,by-8,3,3);
-  ctx.fillRect(bx+10,by-8,3,3);
-
-  ctx.strokeStyle='#0f172a'; ctx.lineWidth=3;
-  ctx.beginPath(); ctx.arc(bx,by+8,12,0.1,Math.PI-.1); ctx.stroke();
-
-  renderText('대형 키워드 몬스터', bx, by-40, 12, '#ef4444', 'center', true);
-
-  if(Math.hypot(state.player.x-mon.x, state.player.y-mon.y) < INTERACT_DIST+20){
-    renderText('[SPACE] 부딪히기', bx, by-56, 12, '#ef4444', 'center', true);
-  }
-}
-
-// ───────────────── 타겟 오브젝트 ─────────────────
-const targetConfigs = {
-  // STAGE 1: 기술
-  loop:    { emoji:'🔁', color:'#64748b', label:'뺑뺑이 (페이지 돌리기)' },
-  frontAd: { emoji:'🧱', color:'#f97316', label:'버튼 → 전면 광고' },
-  subAd:   { emoji:'🧩', color:'#22c55e', label:'소제목 밑에 광고 붙이기' },
-
-  // STAGE 2: 만체리 - 잠재 트래픽 / 노출 가능성
-  kwPast:     { emoji:'📼', color:'#64748b', label:'과거 이슈 (잠재 트래픽 없음)' },
-  kwTooEarly: { emoji:'🗓️', color:'#22d3ee', label:'너무 이른 키워드' },
-  kwHot:      { emoji:'🔥', color:'#f97316', label:'잠재 트래픽 있는 키워드' },
-  dataroom:   { emoji:'💻', color:'#a855f7', label:'만체리 데이터 룸' },
-  benchGood:  { emoji:'📊', color:'#4ade80', label:'상단 글 구조 벤치마킹' },
-  benchBad:   { emoji:'📉', color:'#f97316', label:'잘못된 벤치마킹' },
-
-  // STAGE 3: 사업화·고수익화
-  construction:{ emoji:'🚧', color:'#f59e0b', label:'다회성 트래픽 설계' },
-  engine:      { emoji:'⚙️', color:'#ef4444', label:'유료 광고 엔진(레버리지)' },
-  cpa:         { emoji:'🎯', color:'#22c55e', label:'CPA · 제휴 상품(고객당 가치)' },
-  brand:       { emoji:'🏛️', color:'#a855f7', label:'브랜딩 · 사업화 사이트' },
-
-  // STAGE 4: 코어
-  coreMeh:   { emoji:'😵', color:'#64748b', label:'남 따라하기 코어' },
-  coreFast:  { emoji:'💸', color:'#f97316', label:'한 방에 뽑기 코어' },
-  coreTrue:  { emoji:'💚', color:'#22c55e', label:'내가 좋아하며 되는 사업' },
-
-  // 엔딩
-  stamp:      { emoji:'⭐', color:'#eab308', label:'최종 프리셀 / 로그아웃' }
+let flashAlpha=0;
+function drawFlash(){if(flashAlpha<=0)return;drawRect(0,0,W,H,'#ffffff',flashAlpha);flashAlpha=Math.max(0,flashAlpha-0.02);}
+const targetConfigs={
+  loop:{emoji:'🔁',color:'#64748b',label:'뺑뺑이 (페이지 돌리기)'},
+  frontAd:{emoji:'🧱',color:'#f97316',label:'버튼 → 전면 광고'},
+  subAd:{emoji:'🧩',color:'#22c55e',label:'소제목 밑에 광고 붙이기'},
+  kwPast:{emoji:'📼',color:'#64748b',label:'과거 이슈 (잠재 트래픽 없음)'},
+  kwTooEarly:{emoji:'🗓️',color:'#22d3ee',label:'너무 이른 키워드'},
+  kwHot:{emoji:'🔥',color:'#f97316',label:'잠재 트래픽 있는 키워드'},
+  dataroom:{emoji:'💻',color:'#a855f7',label:'만체리 데이터 룸'},
+  benchGood:{emoji:'📊',color:'#4ade80',label:'상단 글 구조 벤치마킹'},
+  benchBad:{emoji:'📉',color:'#f97316',label:'잘못된 벤치마킹'},
+  construction:{emoji:'🚧',color:'#f59e0b',label:'다회성 트래픽 설계'},
+  engine:{emoji:'⚙️',color:'#ef4444',label:'유료 광고 엔진(레버리지)'},
+  cpa:{emoji:'🎯',color:'#22c55e',label:'CPA · 제휴 상품(고객당 가치)'},
+  brand:{emoji:'🏛️',color:'#a855f7',label:'브랜딩 · 사업화 사이트'},
+  coreMeh:{emoji:'😵',color:'#64748b',label:'남 따라하기 코어'},
+  coreFast:{emoji:'💸',color:'#f97316',label:'한 방에 뽑기 코어'},
+  coreTrue:{emoji:'💚',color:'#22c55e',label:'내가 좋아하며 되는 사업'},
+  stamp:{emoji:'⭐',color:'#eab308',label:'최종 프리셀 / 로그아웃'}
 };
-
 function drawTargets(){
   for(const t of state.targets){
-    if(!t.active) continue;
-    const conf = targetConfigs[t.type];
-    if(!conf) continue;
-    const pulse = Math.sin(Date.now()/200 + t.x*0.01)*0.1 + 1;
-
-    ctx.save();
-    ctx.translate(t.x, t.y);
-    ctx.globalAlpha = 0.28;
-    ctx.fillStyle = conf.color;
-    ctx.beginPath(); ctx.arc(0,0,30*pulse,0,Math.PI*2); ctx.fill();
-
-    ctx.globalAlpha = 1;
-    ctx.font = '34px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(conf.emoji, 0, 0);
-    renderText(conf.label, 0, -40, 11, conf.color, 'center', true);
+    if(!t.active)continue;
+    const conf=targetConfigs[t.type];if(!conf)continue;
+    const pulse=Math.sin(Date.now()/200+t.x*0.01)*0.1+1;
+    ctx.save();ctx.translate(t.x,t.y);
+    ctx.globalAlpha=0.28;ctx.fillStyle=conf.color;
+    ctx.beginPath();ctx.arc(0,0,30*pulse,0,Math.PI*2);ctx.fill();
+    ctx.globalAlpha=1;
+    ctx.font='34px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(conf.emoji,0,0);
+    renderText(conf.label,0,-40,11,conf.color,'center',true);
     ctx.restore();
-
-    if(Math.hypot(state.player.x-t.x, state.player.y-t.y) < INTERACT_DIST){
-      renderText('[SPACE] 상호작용', t.x, t.y-56, 12, '#fff', 'center', true);
-    }
   }
 }
-
-// ───────────────── 화면 효과 ─────────────────
-let flashAlpha=0;
-function drawFlash(){
-  if(flashAlpha<=0) return;
-  drawRect(0,0,W,H,'#ffffff',flashAlpha);
-  flashAlpha=Math.max(0,flashAlpha-0.02);
-}
-
-// ───────────────── 렌더 / 업데이트 ─────────────────
 function render(){
   ctx.clearRect(0,0,W,H);
-  if(state.phase==='start') return;
-
+  if(state.phase!=='play')return;
   const sx=(Math.random()-.5)*state.camShake*8;
   const sy=(Math.random()-.5)*state.camShake*8;
   ctx.save();
-  if(state.camShake>0){
-    ctx.translate(sx,sy);
-    state.camShake=Math.max(0,state.camShake-0.1);
-  }
-
-  drawBackground();
-  drawTargets();
-  drawMaster();
-  drawMonster();
-  drawPixelChar(state.player.x, state.player.y, state.player.dir, state.player.frame, true);
+  if(state.camShake>0){ctx.translate(sx,sy);state.camShake=Math.max(0,state.camShake-0.1);}
+  drawBackground();drawTargets();drawMaster();
+  drawPixelChar(state.player.x,state.player.y,state.player.dir,state.player.frame,true);
   drawFlash();
   ctx.restore();
 }
-
-let lastTime=0;
+let lastTime=0,_fpsF=0,_fpsL=performance.now(),_fpsVal=0;
 function update(dt){
-  if(state.phase!=='play') return;
-
-  const pl=state.player;
-  let moved=false;
-
-  if(Input.keys['ArrowLeft']||Input.keys['KeyA']){ pl.x=Math.max(20, pl.x-SPEED*dt); pl.dir=1; moved=true; }
-  else if(Input.keys['ArrowRight']||Input.keys['KeyD']){ pl.x=Math.min(W-20, pl.x+SPEED*dt); pl.dir=0; moved=true; }
-
-  if(Input.keys['ArrowUp']||Input.keys['KeyW']){ pl.y=Math.max(100, pl.y-SPEED*dt); moved=true; }
-  else if(Input.keys['ArrowDown']||Input.keys['KeyS']){ pl.y=Math.min(540, pl.y+SPEED*dt); moved=true; }
-
-  if(moved){
-    pl.frameTimer+=dt;
-    if(pl.frameTimer>0.1){ pl.frame=(pl.frame+1)%4; pl.frameTimer=0; }
-  } else {
-    pl.frame=0; pl.frameTimer=0;
-  }
-
-  if(Input.justPressed['Space']) handleInteraction();
-  if(state.monster.shake>0) state.monster.shake=Math.max(0,state.monster.shake-3*dt);
+  if(state.phase!=='play')return;
+  const pl=state.player;let moved=false;
+  if(Input.keys['ArrowLeft']||Input.keys['KeyA']){pl.x=Math.max(20,pl.x-SPEED*dt);pl.dir=1;moved=true;}
+  else if(Input.keys['ArrowRight']||Input.keys['KeyD']){pl.x=Math.min(W-20,pl.x+SPEED*dt);pl.dir=0;moved=true;}
+  if(Input.keys['ArrowUp']||Input.keys['KeyW']){pl.y=Math.max(100,pl.y-SPEED*dt);moved=true;}
+  else if(Input.keys['ArrowDown']||Input.keys['KeyS']){pl.y=Math.min(540,pl.y+SPEED*dt);moved=true;}
+  if(moved){pl.frameTimer+=dt;if(pl.frameTimer>0.1){pl.frame=(pl.frame+1)%4;pl.frameTimer=0;}}else{pl.frame=0;pl.frameTimer=0;}
+  if(Input.justPressed['Space']){/* 이후 상호작용 로직 붙이면 됨 */ }
   Input.justPressed={};
 }
-
-// ───────────────── 상호작용 ─────────────────
-function handleInteraction(){
-  const pl=state.player;
-
-  if(Math.hypot(pl.x-state.master.x, pl.y-state.master.y) < INTERACT_DIST){
-    triggerMasterDialogue();
-    return;
-  }
-
-  if(state.stage===2 && state.monster.alive &&
-     Math.hypot(pl.x-state.monster.x, pl.y-state.monster.y) < INTERACT_DIST+20){
-    attackMonster();
-    return;
-  }
-
-  const target = getNearestTarget();
-  if(target) executeTargetAction(target);
-}
-
-function getNearestTarget(){
-  for(const t of state.targets){
-    if(!t.active) continue;
-    const dist=Math.hypot(state.player.x-t.x, state.player.y-t.y);
-    if(dist<INTERACT_DIST) return t;
-  }
-  return null;
-}
-
-// ───────────────── 대사 ─────────────────
-function triggerMasterDialogue(){
-  const msgs = {
-    1: "지금 보는 건 기술이다. 뺑뺑이, 버튼 → 전면 광고, 소제목 밑 광고 같은 것들. 어떤 기술이 어떤 식으로 수와 단가에 영향을 주는지부터 몸으로 확인해 보게.",
-    2: "이제 본질, 만체리 단계다. 잠재 트래픽, 내가 노출시킬 수 있는가(노출 가능성), 내 것에 들어올 이유, 그리고 가격×수 구조를 보는 구간이다. 벤치마킹을 하되, 크고 못하는 키워드보다 작고 되는 것을 노려야 한다.",
-    3: "지금은 사업화·고수익화 단계다. 다회성 트래픽, 브랜딩, 사업화 사이트와 원페이지, CPA·내 상품으로 고객당 가치를 올리고, 레버리지 구조를 설계하는 구간이다.",
-    4: "마지막은 코어다. 내가 좋아하며, 실제로 되는 사업인지. 이 코어가 있어야 5년·10년·15년을 버틸 수 있다."
-  };
-  setDialog('박사님', msgs[state.stage]);
-}
-
-// ───────────────── 타겟 행동 ─────────────────
-function executeTargetAction(t){
-  switch(t.type){
-    // STAGE 1: 기술
-    case 'loop':
-      state.traffic += 5;
-      setDialog('기술',
-        '페이지를 여러 번 돌게 만드는 뺑뺑이 구조입니다. 어떤 구조에서 수(트래픽)가 늘어나는지 감각을 쌓는 단계입니다.');
-      t.active=false;
-      break;
-    case 'frontAd':
-      state.traffic += 3;
-      state.cpc += 0.05;
-      setDialog('기술',
-        '버튼을 눌렀을 때 전면 광고를 노출하는 방식입니다. 특정 지점에서 광고를 집중적으로 보여주는 기술입니다.');
-      t.active=false;
-      break;
-    case 'subAd':
-      state.cpc += 0.1;
-      setDialog('기술',
-        '사람들이 실제로 정보를 읽는 소제목 밑에 광고를 붙이는 방식입니다. 글 흐름 속에서 광고를 배치하는 기술입니다.');
-      t.active=false;
-      break;
-
-    // STAGE 2: 만체리 - 잠재 트래픽
-    case 'kwPast':
-      state.keywordPotential = Math.max(0, state.keywordPotential - 30);
-      setDialog('만체리 - 잠재 트래픽',
-        '이미 끝난 과거 이슈입니다. 현재 기준으로는 잠재 트래픽이 거의 없습니다.');
-      t.active=false;
-      break;
-    case 'kwTooEarly':
-      state.keywordPotential = Math.max(0, state.keywordPotential - 10);
-      setDialog('만체리 - 잠재 트래픽',
-        '너무 이른 키워드입니다. 언젠가는 기회가 될 수 있지만, 당장은 잠재 트래픽이 약합니다.');
-      t.active=false;
-      break;
-    case 'kwHot':
-      state.keywordPotential = Math.min(100, state.keywordPotential + 50);
-      state.traffic += 10;
-      setDialog('만체리 - 잠재 트래픽',
-        '지금 사람들이 실제로 검색하기 시작한 키워드입니다. 크고 안 되는 것보다, 작더라도 되는 것을 먼저 가져옵니다.');
-      t.active=false;
-      break;
-
-    // STAGE 2: 만체리 - 노출 가능성 / 벤치마킹 / 가격×수
-    case 'dataroom':
-      state.principle = Math.min(100, state.principle + 10);
-      setDialog('만체리 - 근본 원리',
-        '데이터로 어떤 키워드에서 노출이 되는지 정리합니다. 여기서 가격×수 구조를 보며, 어떤 조합이 사업이 되는지 판단합니다.');
-      break;
-    case 'benchGood':
-      state.exposureScore = Math.min(100, state.exposureScore + 30);
-      state.principle = Math.min(100, state.principle + 15);
-      setDialog('만체리 - 노출 가능성',
-        '상단에 있는 글을 벤치마킹했습니다. 제목, 소제목, 예시, 구조를 분석해 비슷한 결로 작성해 노출 가능성을 올립니다.');
-      t.active=false;
-      break;
-    case 'benchBad':
-      state.exposureScore = Math.max(0, state.exposureScore - 10);
-      setDialog('만체리 - 노출 가능성',
-        '겉모습만 흉내 내거나, 크고 멋있어 보이는 키워드만 따라갔습니다. 크고 못하는 키워드보다 작고 되는 키워드를 노리는 게 만체리의 핵심입니다.');
-      t.active=false;
-      break;
-
-    // STAGE 3: 사업화·고수익화
-    case 'construction':
-      state.traffic += 20;
-      setDialog('사업화·고수익화 - 다회성 트래픽',
-        '다회성 트래픽이 들어오는 구조를 설계합니다. 사업화 사이트, 원페이지, 사람들이 반복해서 들어올 이유를 만듭니다.');
-      break;
-    case 'engine':
-      state.traffic += 40;
-      state.cpc += 0.4;
-      setDialog('사업화·고수익화 - 레버리지',
-        '유료 광고 엔진을 돌려, 짧은 시간에 데이터를 모읍니다. 같은 시간과 글로 더 큰 결과를 내는 레버리지 구조입니다.');
-      break;
-    case 'cpa':
-      state.cpc += 1.2;
-      setDialog('사업화·고수익화 - 고객당 가치',
-        'CPA와 제휴 상품을 붙여, 한 명의 방문자당 가져올 수 있는 가치를 올립니다. 가격×수에서 “가격”을 키우는 설계입니다.');
-      t.active=false;
-      break;
-    case 'brand':
-      state.cpc += 0.6;
-      state.traffic += 15;
-      setDialog('사업화·고수익화 - 브랜딩',
-        '브랜딩과 사업화 사이트, 원페이지가 갖춰지면, 같은 수(트래픽)로도 더 높은 신뢰와 전환을 만들 수 있습니다.');
-      t.active=false;
-      break;
-
-    // STAGE 4: 코어
-    case 'coreMeh':
-      state.core = Math.max(0, state.core - 10);
-      setDialog('코어(Core)',
-        '“남들도 하니까…”로 시작한 코어입니다. 방향이 분명하지 않아, 시간이 지날수록 피로감이 커질 수 있습니다.');
-      t.active=false;
-      break;
-    case 'coreFast':
-      state.core = Math.max(0, state.core - 5);
-      setDialog('코어(Core)',
-        '“빨리 한 방에 뽑자”는 코어입니다. 단기에는 동력이 되지만, 5년·10년·15년을 내다보기에는 불안정한 방향입니다.');
-      t.active=false;
-      break;
-    case 'coreTrue':
-      state.core = Math.min(100, state.core + 40);
-      setDialog('코어(Core)',
-        '“나는 무엇을 좋아하고, 왜 이 일을 하고 싶은가?”에 대한 답입니다. 이 코어가 있어야 5년·10년·15년을 버틸 수 있습니다.');
-      t.active=false;
-      break;
-
-    // 엔딩
-    case 'stamp':
-      setDialog('시스템 알림',
-        '기술 → 본질(만체리: 잠재 트래픽·노출 가능성·가격×수) → 사업화·고수익화(레버리지) → 코어 구조가 정렬되었습니다. 로그아웃을 진행합니다...');
-      updateRevenue();
-      updateMeta();
-      setTimeout(()=>{ state.phase='end'; showEndScreen(); }, 1800);
-      return;
-  }
-
-  stageProgressCheck();
-  updateRevenue();
-  updateMeta();
-}
-
-// ───────────────── 몬스터 / 스테이지 전환 ─────────────────
-function attackMonster(){
-  state.monster.shake = 1;
-  state.camShake = 1.5;
-  state.monster.hits += 1;
-
-  if(state.monster.hits < 3){
-    setDialog('대형 키워드 몬스터',
-      `[데미지 0] 딸깍, 한 시간에 얼마 같은 환상만 쫓는 노가다는 상단을 뚫지 못한다! (타격 횟수: ${state.monster.hits}/3)`);
-  } else {
-    setDialog('시스템 알림',
-      '가짜 노력의 한계를 체감했습니다. 이제부터는 만체리와 근본 원리를 기반으로 움직여야 합니다.');
-    flashAlpha = 0.6;
-    setTimeout(()=>{
-      state.monster.alive=false;
-      advanceStage(3,'사업화·고수익화 - 다회성 트래픽 · 브랜딩 · 레버리지','engine');
-      setStageTargets(3);
-      setDialog('박사님','좋다. 이제 다회성 트래픽, 브랜딩, CPA·내 상품으로 가격×수 구조를 두껍게 만들고, 레버리지까지 설계할 차례다.');
-      updateMeta();
-    },1200);
-  }
-}
-
-function stageProgressCheck(){
-  if(state.stage===1){
-    const done = state.targets.filter(t=>['loop','frontAd','subAd'].includes(t.type) && t.active).length===0;
-    if(done){
-      advanceStage(2,'본질(만체리) - 잠재 트래픽 · 노출 가능성 · 가격×수','dataroom');
-      setStageTargets(2);
-      setDialog('박사님','기술은 맛봤으니, 이제 진짜 본질인 만체리 단계다. 잠재 트래픽과 노출 가능성, 가격×수 구조를 보며 “되는 것”에 집중하게.');
-      flashAlpha = 0.35;
-    }
-  }
-
-  if(state.stage===2){
-    if(state.keywordPotential>=40 && state.exposureScore>=50){
-      advanceStage(3,'사업화·고수익화 - 다회성 트래픽 · 브랜딩 · 레버리지','engine');
-      setStageTargets(3);
-      setDialog('박사님','본질을 봤다면, 이제 사업화·고수익화다. 같은 시간과 글로 더 큰 결과를 내는 레버리지 구조를 설계해야 한다.');
-      flashAlpha = 0.35;
-    }
-  }
-
-  if(state.stage===3){
-    const done = state.targets.filter(t=>['cpa','brand'].includes(t.type) && t.active).length===0;
-    if(done){
-      advanceStage(4,'코어 - 내가 좋아하며 되는 사업','meadow');
-      setStageTargets(4);
-      setDialog('박사님','이제 마지막이다. 내가 좋아하며, 실제로 되는 사업인지 코어를 정리해야 5년·10년·15년이 보인다.');
-      flashAlpha = 0.45;
-    }
-  }
-
-  if(state.stage===4){
-    const coreDone = state.targets.filter(t=>['coreMeh','coreFast','coreTrue'].includes(t.type) && t.active).length===0;
-    if(coreDone){
-      advanceStage(4,'코어 - 프리셀 마무리','meadow');
-      state.targets = [{ x:400, y:300, type:'stamp', active:true }];
-    }
-  }
-}
-
-function setStageTargets(stage){
-  state.targets = [];
-  if(stage===1){
-    state.targets = [
-      { x:160, y:320, type:'loop', active:true },
-      { x:300, y:260, type:'frontAd', active:true },
-      { x:440, y:340, type:'subAd', active:true }
-    ];
-  }else if(stage===2){
-    state.targets = [
-      { x:150, y:380, type:'kwPast', active:true },
-      { x:300, y:400, type:'kwTooEarly', active:true },
-      { x:450, y:370, type:'kwHot', active:true },
-      { x:200, y:260, type:'dataroom', active:true },
-      { x:360, y:260, type:'benchGood', active:true },
-      { x:260, y:460, type:'benchBad', active:true }
-    ];
-  }else if(stage===3){
-    state.targets = [
-      { x:140, y:360, type:'construction', active:true },
-      { x:300, y:280, type:'engine', active:true },
-      { x:460, y:340, type:'engine', active:true },
-      { x:210, y:460, type:'cpa', active:true },
-      { x:400, y:450, type:'brand', active:true }
-    ];
-  }else if(stage===4){
-    state.targets = [
-      { x:180, y:320, type:'coreMeh', active:true },
-      { x:300, y:260, type:'coreFast', active:true },
-      { x:420, y:320, type:'coreTrue', active:true }
-    ];
-  }
-}
-
-function advanceStage(newStage,labelTxt,newBg){
-  state.stage = newStage;
-  state.bgDecor = newBg;
-  document.getElementById('stage-label').textContent = `STAGE ${newStage}: ${labelTxt}`;
-}
-
-// ───────────────── UI & 수익 계산 ─────────────────
-function setDialog(speaker,txt){
-  const sp = document.getElementById('dialog-speaker');
-  sp.textContent = speaker;
-  sp.style.color =
-    speaker==='박사님' ? '#00ff99' :
-    (speaker.includes('몬스터') ? '#ef4444' :
-    (speaker.includes('코어') ? '#22c55e' :
-    (speaker.includes('사업화') ? '#f97316' :
-    (speaker.includes('만체리') ? '#a855f7' : '#38bdf8'))));
-  document.getElementById('dialog-text').textContent = txt;
-}
-
-function updateRevenue(){
-  const baseRev = state.traffic * state.cpc;
-  const appealBonus = 1 + (state.clickAppeal / 200);
-  const coreBonus = 1 + (state.core / 500);
-  const principleBonus = 1 + (state.principle / 500);
-  const rev = baseRev * appealBonus * coreBonus * principleBonus;
-  state.score = rev;
-  document.getElementById('revenue').textContent =
-    `REVENUE: $${rev.toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2})}`;
-}
-
-function updateMeta(){
-  document.getElementById('meta-label').textContent =
-    `수: ${state.traffic} | 단가: $${state.cpc.toFixed(2)} | 잠재 트래픽: ${state.keywordPotential} | 노출 가능성: ${state.exposureScore} | 유입 사유: ${state.clickAppeal}
-코어(Core): ${state.core} | 근본 원리: ${state.principle} (가격×수 이해도)`;
-}
-
-function showEndScreen(){
-  const el=document.createElement('div');
-  el.id='end-screen';
-  el.style.cssText='position:absolute;inset:0;background:rgba(5,10,15,0.95);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;pointer-events:auto;z-index:100;';
-  el.innerHTML = `
-    <div style="font-size:56px;text-shadow:0 0 20px rgba(234,179,8,0.5);">⭐</div>
-    <h1 style="font-size:32px;font-weight:700;color:#00ff99;text-align:center;">기술 · 만체리 · 사업화·고수익화 · 코어 완성</h1>
-    <p style="color:#94a3b8;font-size:15px;text-align:center;line-height:1.8;max-width:480px;">
-      최종 수익: <strong style="color:#00ff99;font-size:20px;">$${state.score.toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2})}</strong><br>
-      기술(뺑뺑이·전면 광고·소제목 밑 광고) 위에, 본질(만체리: 잠재 트래픽·노출 가능성·가격×수),<br>
-      사업화·고수익화(다회성 트래픽·브랜딩·CPA·내 상품·레버리지)를 쌓고,<br>
-      마지막에 코어(내가 좋아하며 되는 사업)까지 정렬한 결과입니다.
-    </p>
-    <button onclick="location.reload()" style="background:#00ff99;color:#050a0f;border:none;border-radius:6px;padding:12px 32px;font-size:16px;font-weight:700;cursor:pointer;font-family:'Satoshi',sans-serif;margin-top:10px;">
-      다시 증명하기
-    </button>
-  `;
-  document.getElementById('wrap').appendChild(el);
-}
-
-// ───────────────── 루프 / 시작 ─────────────────
-let _fpsF=0,_fpsL=performance.now(),_fpsVal=0;
 function updateFPS(now){
   _fpsF++;
   if(now-_fpsL>=1000){
     _fpsVal=Math.round(_fpsF*1000/(now-_fpsL));
-    _fpsF=0; _fpsL=now;
+    _fpsF=0;_fpsL=now;
     document.getElementById('fps').textContent=`FPS:${_fpsVal}`;
   }
 }
-
 function loop(now){
-  const dt=Math.min((now-lastTime)/1000, 0.05);
+  const dt=Math.min((now-lastTime)/1000,0.05);
   lastTime=now;
-  update(dt);
-  render();
-  updateFPS(now);
+  update(dt);render();updateFPS(now);
   requestAnimationFrame(loop);
 }
-
-document.getElementById('start-btn').addEventListener('click', ()=>{
-  document.getElementById('start-screen').remove();
+function updateMeta(){
+  document.getElementById('meta-label').textContent=
+    `수: ${state.traffic} | 단가: $${state.cpc.toFixed(2)} | 잠재 트래픽: ${state.keywordPotential} | 노출 가능성: ${state.exposureScore} | 유입 사유: ${state.clickAppeal}
+코어(Core): ${state.core} | 근본 원리: ${state.principle} (가격×수 이해도)`;
+}
+function updateRevenue(){
+  const baseRev=state.traffic*state.cpc;
+  const appealBonus=1+state.clickAppeal/200;
+  const coreBonus=1+state.core/500;
+  const principleBonus=1+state.principle/500;
+  const rev=baseRev*appealBonus*coreBonus*principleBonus;
+  state.score=rev;
+  document.getElementById('revenue').textContent=
+    `REVENUE: $${rev.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+}
+document.getElementById('start-btn').addEventListener('click',()=>{
+  const s=document.getElementById('start-screen');
+  if(s)s.remove();
   state.phase='play';
-  advanceStage(1,'기술 - 뺑뺑이 · 전면 광고 · 소제목 밑 광고','construction');
-  setStageTargets(1);
-  updateRevenue();
-  updateMeta();
-  setDialog('박사님',
-    '지금 보는 건 기술이다. 뺑뺑이, 버튼 → 전면 광고, 소제목 밑 광고 같은 것들. 이 다음 단계에서 본질과 가격×수 구조를 함께 보게 될 거다.');
   lastTime=performance.now();
+  updateRevenue();updateMeta();
   requestAnimationFrame(loop);
 });
 </script>
