@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8"/>
-  <title>본질센스 RPG: 수익화 공식의 완성</title>
+  <title>본질센스 RPG: 수익화 공식과 코어</title>
   <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,700&display=swap" rel="stylesheet">
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
@@ -64,7 +64,7 @@
       line-height:1.3;text-shadow:0 0 24px rgba(0,255,153,0.4);
     }
     #start-screen p{
-      font-size:15px;color:#94a3b8;text-align:center;max-width:430px;line-height:1.7;
+      font-size:15px;color:#94a3b8;text-align:center;max-width:440px;line-height:1.7;
     }
     #start-btn{
       background:#00ff99;color:#050a0f;border:none;border-radius:6px;
@@ -87,8 +87,8 @@
   <div id="ui">
     <div id="hud">
       <div id="revenue">REVENUE: $0.00</div>
-      <div id="stage-label">STAGE 1: 잠재 트래픽 감지</div>
-      <div id="meta-label">수: 0 | 단가: $1.00 | 잠재력: 0 | 노출: 0 | 유입 사유: 0</div>
+      <div id="stage-label">STAGE 1: 코어와 잠재 트래픽</div>
+      <div id="meta-label">수: 0 | 단가: $1.00 | 잠재력: 0 | 노출: 0 | 유입: 0 | 코어: 0 | 원리: 0</div>
     </div>
 
     <div id="controls-hint">
@@ -98,23 +98,24 @@
 
     <div id="dialog-box">
       <div id="dialog-speaker">시스템 알림</div>
-      <div id="dialog-text">방향키로 박사님께 다가가 SPACE를 눌러 수익화 공식을 배우십시오.</div>
+      <div id="dialog-text">박사님께 다가가 SPACE를 눌러, 코어와 수익화 공식을 배우십시오.</div>
     </div>
 
     <div id="fps"></div>
   </div>
 
   <div id="start-screen">
-    <h1>본질센스 RPG<br>수익화 공식의 완성</h1>
+    <h1>본질센스 RPG<br>코어와 수익화 공식</h1>
     <p>
-      수익은 운이 아니라 설계입니다.<br>
-      잠재 트래픽, 노출 가능성, 유입 사유를 직접 체험하며 수익 공식을 완성하십시오.
+      코어(나) → 원리(구조) → 기술(방법).<br>
+      잠재 트래픽·노출·유입 사유까지 직접 체험하며, 흔들리지 않는 수익 구조를 설계하십시오.
     </p>
     <button id="start-btn">▶ 시스템 가동</button>
   </div>
 </div>
 
 <script>
+// ───────────────── 상수 / 상태 ─────────────────
 const W = 600, H = 600;
 const SPEED = 180;
 const INTERACT_DIST = 72;
@@ -133,12 +134,13 @@ const state = {
   exposureScore: 0,
   clickAppeal: 0,
   risk: 0,
+  core: 0,
+  principle: 0,
   player: { x: 300, y: 470, dir: 0, frame: 0, frameTimer: 0 },
   master: { x: 300, y: 120 },
   monster: { x: -200, y: -200, alive: false, shake: 0, hits: 0 },
   bgDecor: 'fishing',
   camShake: 0,
-  stageFlags: {},
   targets: []
 };
 
@@ -150,6 +152,7 @@ document.addEventListener('keydown', e=>{
 });
 document.addEventListener('keyup', e=>{ Input.keys[e.code] = false; });
 
+// ───────────────── 배경 ─────────────────
 const bgPalettes = {
   fishing:      { sky:'#0d1b2a', ground:'#1a3a2a', accent:'#1e4d6b' },
   dataroom:     { sky:'#0a0f1a', ground:'#0f1f2f', accent:'#1b2f4d' },
@@ -158,27 +161,20 @@ const bgPalettes = {
   meadow:       { sky:'#1a3020', ground:'#2a4a2a', accent:'#3a6040' }
 };
 
-function drawRect(x,y,w,h,col,a=1){
-  ctx.globalAlpha=a; ctx.fillStyle=col; ctx.fillRect(x,y,w,h); ctx.globalAlpha=1;
-}
-function drawRoundRect(x,y,w,h,r,col,a=1){
-  ctx.globalAlpha=a; ctx.fillStyle=col; ctx.beginPath(); ctx.roundRect(x,y,w,h,r); ctx.fill(); ctx.globalAlpha=1;
-}
-function renderText(txt, x, y, size, col, align='center', bold=false){
-  ctx.fillStyle = col;
-  ctx.textAlign = align;
-  ctx.font = `${bold ? 'bold ' : ''}${size}px Satoshi, sans-serif`;
-  ctx.fillText(txt, x, y);
+function drawRect(x,y,w,h,col,a=1){ ctx.globalAlpha=a; ctx.fillStyle=col; ctx.fillRect(x,y,w,h); ctx.globalAlpha=1; }
+function drawRoundRect(x,y,w,h,r,col,a=1){ ctx.globalAlpha=a; ctx.fillStyle=col; ctx.beginPath(); ctx.roundRect(x,y,w,h,r); ctx.fill(); ctx.globalAlpha=1; }
+function renderText(txt,x,y,size,col,align='center',bold=false){
+  ctx.fillStyle=col; ctx.textAlign=align;
+  ctx.font=`${bold?'bold ':''}${size}px Satoshi, sans-serif`;
+  ctx.fillText(txt,x,y);
 }
 
 function drawBackground(){
   const p = bgPalettes[state.bgDecor] || bgPalettes.fishing;
   drawRect(0,0,W,H*0.55,p.sky);
   const grad = ctx.createLinearGradient(0,H*0.45,0,H*0.65);
-  grad.addColorStop(0,p.accent);
-  grad.addColorStop(1,p.ground);
-  ctx.fillStyle = grad;
-  ctx.fillRect(0,H*0.45,W,H*0.2);
+  grad.addColorStop(0,p.accent); grad.addColorStop(1,p.ground);
+  ctx.fillStyle=grad; ctx.fillRect(0,H*0.45,W,H*0.2);
   drawRect(0,H*0.62,W,H*0.38,p.ground);
   drawBgDecor();
 }
@@ -191,41 +187,33 @@ function drawBgDecor(){
     ctx.beginPath(); ctx.ellipse(300,320,240,60,0,0,Math.PI*2); ctx.fill();
     ctx.strokeStyle='#3a8fbf44'; ctx.lineWidth=1;
     for(let i=0;i<6;i++){
-      ctx.beginPath();
-      ctx.moveTo(150+i*40,315);
-      ctx.lineTo(180+i*40,315);
-      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(150+i*40,315); ctx.lineTo(180+i*40,315); ctx.stroke();
     }
-  } else if(d==='dataroom'){
+  }else if(d==='dataroom'){
     for(let i=0;i<4;i++){
       drawRoundRect(60+i*130,160,80,180,4,'#111a2a');
       for(let j=0;j<7;j++){
-        ctx.fillStyle = Math.random()>.4 ? '#00ff88' : '#1a3a2a';
+        ctx.fillStyle = Math.random()>.4 ? '#22c55e' : '#1a3a2a';
         ctx.fillRect(70+i*130,175+j*24,10,8);
       }
     }
-  } else if(d==='construction'){
+  }else if(d==='construction'){
     const bld=[[40,180,90,270],[160,130,70,330],[260,160,100,300],[400,100,80,360],[510,180,60,280]];
     bld.forEach(([x,y,w,h])=>{
-      ctx.fillStyle='#1a0f00';
-      ctx.fillRect(x,y,w,h);
+      ctx.fillStyle='#1a0f00'; ctx.fillRect(x,y,w,h);
       ctx.fillStyle='#ffcc6633';
       for(let r=0;r<5;r++) for(let c=0;c<2;c++) ctx.fillRect(x+10+c*20,y+15+r*35,12,14);
     });
-  } else if(d==='engine'){
+  }else if(d==='engine'){
     ctx.strokeStyle='#3a3a6a'; ctx.lineWidth=2;
-    for(let i=0;i<5;i++){
-      ctx.beginPath(); ctx.moveTo(i*130,0); ctx.lineTo(i*130,H); ctx.stroke();
-    }
-    for(let j=0;j<5;j++){
-      ctx.beginPath(); ctx.moveTo(0,j*130); ctx.lineTo(W,j*130); ctx.stroke();
-    }
+    for(let i=0;i<5;i++){ ctx.beginPath(); ctx.moveTo(i*130,0); ctx.lineTo(i*130,H); ctx.stroke(); }
+    for(let j=0;j<5;j++){ ctx.beginPath(); ctx.moveTo(0,j*130); ctx.lineTo(W,j*130); ctx.stroke(); }
     [[160,220],[420,300],[280,380]].forEach(([cx,cy])=>{
       ctx.strokeStyle='#5050aa77'; ctx.lineWidth=3;
       ctx.beginPath(); ctx.arc(cx,cy,45,0,Math.PI*2); ctx.stroke();
       ctx.beginPath(); ctx.arc(cx,cy,20,0,Math.PI*2); ctx.stroke();
     });
-  } else if(d==='meadow'){
+  }else if(d==='meadow'){
     ctx.fillStyle='#3a8040';
     for(let i=0;i<40;i++){
       const gx=60+i*14, gy=H*0.6+Math.sin(i)*8;
@@ -237,21 +225,17 @@ function drawBgDecor(){
   ctx.restore();
 }
 
+// ───────────────── 캐릭터 ─────────────────
 const PLAYER_COLORS = { hair:'#1e293b', skin:'#fcd34d', shirt:'#0ea5e9', pants:'#0f172a', shoes:'#020617', eye:'#0f172a', shadow:'#00000055' };
 const MASTER_COLORS = { hair:'#94a3b8', skin:'#fcd34d', shirt:'#64748b', pants:'#334155', shoes:'#0f172a', eye:'#f8fafc', shadow:'#00000055' };
 
-function drawPixelChar(cx, cy, dir, frame, isPlayer){
+function drawPixelChar(cx,cy,dir,frame,isPlayer){
   const c = isPlayer ? PLAYER_COLORS : MASTER_COLORS;
-
   ctx.fillStyle=c.shadow;
   ctx.beginPath(); ctx.ellipse(cx,cy+14,16,5,0,0,Math.PI*2); ctx.fill();
 
   ctx.save();
-  if(dir===1){
-    ctx.translate(cx,cy);
-    ctx.scale(-1,1);
-    ctx.translate(-cx,-cy);
-  }
+  if(dir===1){ ctx.translate(cx,cy); ctx.scale(-1,1); ctx.translate(-cx,-cy); }
 
   const legSwing = Math.sin(frame*Math.PI/2)*4;
   const armSwing = Math.sin(frame*Math.PI/2)*5;
@@ -274,7 +258,6 @@ function drawPixelChar(cx, cy, dir, frame, isPlayer){
   ctx.fillRect(cx+10,cy-8-armSwing,5,5);
 
   ctx.fillRect(cx-9,cy-42,18,18);
-
   ctx.fillStyle=c.hair;
   ctx.fillRect(cx-10,cy-44,20,7);
   ctx.fillRect(cx-12,cy-42,3,12);
@@ -293,7 +276,7 @@ function drawPixelChar(cx, cy, dir, frame, isPlayer){
 }
 
 function drawMaster(){
-  const m = state.master;
+  const m=state.master;
   drawPixelChar(m.x,m.y,0,0,false);
   ctx.fillStyle='rgba(0,0,0,.7)';
   ctx.beginPath(); ctx.roundRect(m.x-36,m.y-70,72,20,4); ctx.fill();
@@ -307,10 +290,9 @@ function drawMaster(){
 }
 
 function drawMonster(){
-  const mon = state.monster;
+  const mon=state.monster;
   if(!mon.alive) return;
-
-  const t = Date.now()/400;
+  const t=Date.now()/400;
   const bx = mon.x + Math.sin(mon.shake*15)*mon.shake*10;
   const by = mon.y + Math.sin(t)*6;
 
@@ -341,21 +323,36 @@ function drawMonster(){
   }
 }
 
+// ───────────────── 타겟 오브젝트 ─────────────────
 const targetConfigs = {
+  // 코어 선택
+  coreMeh:   { emoji:'😵', color:'#64748b', label:'남 따라하기 코어' },
+  coreFast:  { emoji:'💸', color:'#f97316', label:'한방 뽑기 코어' },
+  coreTrue:  { emoji:'💚', color:'#22c55e', label:'진짜 나의 코어' },
+
+  // 잠재 트래픽 & 테스트
   fishing:      { emoji:'🎣', color:'#38bdf8', label:'낚싯대 테스트' },
   kwPast:       { emoji:'📼', color:'#64748b', label:'이미 끝난 이슈' },
-  kwTooEarly:   { emoji:'🗓️', color:'#22d3ee', label:'너무 이른 시즌 키워드' },
+  kwTooEarly:   { emoji:'🗓️', color:'#22d3ee', label:'너무 이른 시즌' },
   kwHot:        { emoji:'🔥', color:'#f97316', label:'막 떠오르는 키워드' },
+
+  // 데이터 / 벤치마킹
   dataroom:     { emoji:'💻', color:'#a855f7', label:'데이터 분석 단말기' },
-  benchGood:    { emoji:'📊', color:'#4ade80', label:'상단 글 구조 벤치마킹' },
-  benchBad:     { emoji:'📉', color:'#f97316', label:'엉뚱한 구조 따라 하기' },
+  benchGood:    { emoji:'📊', color:'#4ade80', label:'상단 구조 벤치마킹' },
+  benchBad:     { emoji:'📉', color:'#f97316', label:'겉모습만 따라 하기' },
+
+  // 트래픽 설계 & 유입 사유
   construction: { emoji:'🚧', color:'#f59e0b', label:'트래픽 설계 도면' },
   ctaBad:       { emoji:'🔗', color:'#64748b', label:'무성의한 클릭 유도' },
   ctaMid:       { emoji:'🪝', color:'#fbbf24', label:'애매한 클릭 유도' },
-  ctaGood:      { emoji:'✨', color:'#22c55e', label:'매력적인 혜택 멘트' },
+  ctaGood:      { emoji:'✨', color:'#22c55e', label:'혜택 중심 멘트' },
+
+  // 광고 / 수익 구조
   engine:       { emoji:'⚙️', color:'#ef4444', label:'광고 가속 엔진' },
   cpa:          { emoji:'🎯', color:'#22c55e', label:'CPA / 제휴 연결' },
   brand:        { emoji:'🏛️', color:'#a855f7', label:'브랜드 구축' },
+
+  // 엔딩
   stamp:        { emoji:'⭐', color:'#eab308', label:'최종 프리셀 / 로그아웃' }
 };
 
@@ -382,11 +379,12 @@ function drawTargets(){
     ctx.restore();
 
     if(Math.hypot(state.player.x-t.x, state.player.y-t.y) < INTERACT_DIST){
-      renderText(`[SPACE] ${conf.label}`, t.x, t.y-56, 12, '#fff', 'center', true);
+      renderText('[SPACE] 상호작용', t.x, t.y-56, 12, '#fff', 'center', true);
     }
   }
 }
 
+// ───────────────── 화면 효과 ─────────────────
 let flashAlpha = 0;
 function drawFlash(){
   if(flashAlpha<=0) return;
@@ -394,6 +392,7 @@ function drawFlash(){
   flashAlpha = Math.max(0,flashAlpha-0.02);
 }
 
+// ───────────────── 렌더 / 업데이트 ─────────────────
 function render(){
   ctx.clearRect(0,0,W,H);
   if(state.phase==='start') return;
@@ -419,8 +418,8 @@ let lastTime = 0;
 function update(dt){
   if(state.phase!=='play') return;
 
-  const pl = state.player;
-  let moved = false;
+  const pl=state.player;
+  let moved=false;
 
   if(Input.keys['ArrowLeft']||Input.keys['KeyA']){ pl.x=Math.max(20, pl.x-SPEED*dt); pl.dir=1; moved=true; }
   else if(Input.keys['ArrowRight']||Input.keys['KeyD']){ pl.x=Math.min(W-20, pl.x+SPEED*dt); pl.dir=0; moved=true; }
@@ -440,153 +439,166 @@ function update(dt){
   }
 
   if(Input.justPressed['Space']) handleInteraction();
-  if(state.monster.shake>0) state.monster.shake = Math.max(0,state.monster.shake-3*dt);
-  Input.justPressed = {};
+  if(state.monster.shake>0) state.monster.shake=Math.max(0,state.monster.shake-3*dt);
+  Input.justPressed={};
 }
 
+// ───────────────── 상호작용 ─────────────────
 function handleInteraction(){
-  const pl = state.player;
+  const pl=state.player;
 
+  // 박사님 대화
   if(Math.hypot(pl.x-state.master.x, pl.y-state.master.y) < INTERACT_DIST){
     triggerMasterDialogue();
     return;
   }
 
+  // 몬스터
   if(state.stage===2 && state.monster.alive &&
      Math.hypot(pl.x-state.monster.x, pl.y-state.monster.y) < INTERACT_DIST+20){
     attackMonster();
     return;
   }
 
+  // 타겟
   const target = getNearestTarget();
-  if(target){
-    executeTargetAction(target);
-  }
+  if(target) executeTargetAction(target);
 }
 
 function getNearestTarget(){
-  let found = null;
   for(const t of state.targets){
     if(!t.active) continue;
     const dist = Math.hypot(state.player.x-t.x, state.player.y-t.y);
-    if(dist < INTERACT_DIST){
-      found = t;
-      break;
-    }
+    if(dist<INTERACT_DIST) return t;
   }
-  return found;
+  return null;
 }
 
+// ───────────────── 대사 ─────────────────
 function triggerMasterDialogue(){
   const msgs = {
-    1: "수익은 운이 아니다. 먼저 잠재 트래픽이 있는 키워드를 골라야 한다. 옛날 이슈와 너무 먼 미래 키워드는 버리고, 막 뜨는 주제를 잡게.",
-    2: "대형 키워드의 덩치에 속지 마라. 데이터 없이 달려들면 가짜 노력만 남는다. 직접 부딪혀 그 무력함을 보게.",
-    3: "좋은 키워드라도 내 글이 상단에 노출될 수 있는지 봐야 한다. 경쟁자의 구조를 뜯어보고, 노출된 결을 확장하게.",
-    4: "이제 사람을 끌어들이는 이유를 설계할 차례다. 단순한 링크가 아니라, 왜 눌러야 하는지를 보여줘야 한다.",
-    5: "수는 모였고 이유도 생겼다. 이제 광고와 제휴를 연결해 시간을 복사하게. 유료 레버리지는 손실이 아니라 학습의 가속이다.",
-    6: "애드센스 하나에만 기대지 마라. CPA, 제휴, 자체 상품, 브랜딩으로 수익 구조를 두껍게 만들어야 오래 간다.",
-    7: "잘 왔네. 잠재 트래픽, 노출 성공, 매력적인 유입 사유가 맞물릴 때 수익은 터진다. 마지막 도장을 찍고 로그아웃하게."
+    1: "수익은 기술에서 시작하는 게 아니라, 코어와 잠재 트래픽에서 시작한다. 먼저 진짜 내가 원하는 방향과 사람들이 앞으로 찾아올 주제를 고르게.",
+    2: "대형 키워드, 딸깍, 한 시간에 얼마… 이런 말들이 부업을 망친다. 데이터 없이 덤비는 가짜 노력의 끝을 직접 확인해 보게.",
+    3: "좋은 키워드라도 내 글이 상단에 노출될 수 없다면 소용없다. 상단 글 구조를 벤치마킹하고, 노출되는 결로 확장하는 것이 원리 단계다.",
+    4: "이제 유입 사유다. “아래 링크 클릭”이 아니라, 이 글을 읽어야만 하는 이유와 이득을 보여줘야 한다.",
+    5: "수(트래픽)와 단가, 유입 사유가 갖춰졌다면 광고와 제휴로 시간을 복사할 차례다. 원리를 아는 사람만 이 레버리지를 버틴다.",
+    6: "애드센스 하나에만 기대지 마라. CPA, 제휴, 자체 상품, 브랜딩까지 쌓아 올려야 5년, 10년을 버틸 수 있다. 이것이 구조의 완성이다.",
+    7: "이제 코어·원리·기술이 정렬됐다. 잠재 트래픽, 노출, 유입 사유의 3박자가 맞아떨어질 때 수익은 터진다. 마지막 도장을 찍고 로그아웃하게."
   };
   setDialog('박사님', msgs[state.stage]);
 }
 
+// ───────────────── 타겟 행동 ─────────────────
 function executeTargetAction(t){
   switch(t.type){
-    case 'fishing':
-      state.traffic += 2;
-      setDialog('시스템 알림', '낚싯대를 던져 시장 반응을 살핍니다. 먼저 수요를 체감합니다.');
+    // 코어 선택
+    case 'coreMeh':
+      state.core = Math.max(0, state.core - 10);
+      setDialog('코어', '“남들도 하니까…”로 시작한 코어는 금방 흔들립니다. 어려워지면 가장 먼저 무너지는 종류입니다.');
+      t.active=false;
+      break;
+    case 'coreFast':
+      state.core = Math.max(0, state.core - 5);
+      setDialog('코어', '“빨리, 많이”만 바라본 코어입니다. 한 번은 터질 수 있지만, 5년, 10년을 버티기 어렵습니다.');
+      t.active=false;
+      break;
+    case 'coreTrue':
+      state.core = Math.min(100, state.core + 40);
+      setDialog('코어', '“나는 왜 이 일을 하고 싶은가?”에 대한 답을 붙잡았습니다. 흔들려도 다시 돌아올 좌표가 생깁니다.');
+      t.active=false;
       break;
 
+    // 잠재 트래픽 / 테스트
+    case 'fishing':
+      state.traffic += 2;
+      setDialog('시스템 알림', '낚싯대를 던져 시장 반응을 살핍니다. 막연한 글 쓰기가 아니라, 수요를 관찰하는 연습입니다.');
+      break;
     case 'kwPast':
       state.keywordPotential = Math.max(0, state.keywordPotential - 30);
       state.traffic = Math.max(0, state.traffic - 1);
-      setDialog('시스템 알림', '이미 끝난 주제입니다. 노출돼도 들어오는 사람이 거의 없습니다.');
-      t.active = false;
+      setDialog('시스템 알림', '이미 끝난 주제입니다. 노출이 되어도 들어오는 사람이 거의 없습니다.');
+      t.active=false;
       break;
-
     case 'kwTooEarly':
       state.keywordPotential = Math.max(0, state.keywordPotential - 10);
-      setDialog('시스템 알림', '너무 먼 미래 키워드입니다. 지금은 공허한 타이밍입니다.');
-      t.active = false;
+      setDialog('시스템 알림', '너무 먼 미래 키워드입니다. 나중엔 좋겠지만, 지금은 공허한 타이밍입니다.');
+      t.active=false;
       break;
-
     case 'kwHot':
       state.keywordPotential = Math.min(100, state.keywordPotential + 50);
       state.traffic += 10;
       setDialog('시스템 알림', '지금 막 관심이 올라오는 주제입니다. 잠재 트래픽이 강하게 형성됩니다.');
-      t.active = false;
+      t.active=false;
       break;
 
+    // 데이터 / 벤치마킹
     case 'dataroom':
+      state.principle = Math.min(100, state.principle + 10);
       state.traffic += 5;
-      setDialog('데이터 분석', 'O/X 데이터를 정리해 어떤 주제가 먹히는지 분석합니다.');
+      setDialog('데이터 분석', 'O/X 데이터를 정리해 어떤 주제가 먹히는지 확인합니다. 머리가 아니라 지표로 판단하기 시작했습니다.');
       break;
-
     case 'benchGood':
       state.exposureScore = Math.min(100, state.exposureScore + 30);
-      setDialog('데이터 분석', '상단 글 구조를 분석하고 비슷한 장치를 적용했습니다. 노출 가능성이 크게 상승합니다.');
-      t.active = false;
+      state.principle = Math.min(100, state.principle + 15);
+      setDialog('데이터 분석', '상단 글의 제목·소제목·예시·구조를 뜯어보고 비슷한 장치를 적용했습니다. 노출 가능성이 크게 상승합니다.');
+      t.active=false;
       break;
-
     case 'benchBad':
       state.exposureScore = Math.max(0, state.exposureScore - 10);
-      setDialog('데이터 분석', '겉모습만 흉내 냈습니다. 본질을 파악하지 못해 의미 없는 수정만 늘어납니다.');
-      t.active = false;
+      setDialog('데이터 분석', '겉모습만 흉내 냈습니다. 왜 그렇게 쓰였는지 이해하지 못하면, 수정만 늘어날 뿐입니다.');
+      t.active=false;
       break;
 
+    // 트래픽 설계 / 유입 사유
     case 'construction':
       state.traffic += 20;
       state.cpc += 0.1;
-      setDialog('트래픽 설계', '외부 유입 입구를 설계합니다. 수가 늘고 구조가 정리됩니다.');
+      setDialog('트래픽 설계', '외부 유입 입구를 설계합니다. 쉬운 길로 사람을 모으는 구조를 만드는 단계입니다.');
       break;
-
     case 'ctaBad':
       state.clickAppeal = Math.max(0, state.clickAppeal - 10);
-      setDialog('유입 사유', '“아래 링크 클릭하세요”만으로는 약합니다. 사람은 움직일 이유가 필요합니다.');
-      t.active = false;
+      setDialog('유입 사유', '“아래 링크 클릭하세요”만으로는 약합니다. 사람은 움직일 이유와 이득이 필요합니다.');
+      t.active=false;
       break;
-
     case 'ctaMid':
       state.clickAppeal = Math.min(100, state.clickAppeal + 5);
-      setDialog('유입 사유', '“자세한 내용은 아래에서” 정도로는 경쟁이 심한 환경에서 눈에 띄기 어렵습니다.');
-      t.active = false;
+      setDialog('유입 사유', '“자세한 내용은 아래에서” 정도로는 이미 넘쳐나는 정보 속에서 묻히기 쉽습니다.');
+      t.active=false;
       break;
-
     case 'ctaGood':
       state.clickAppeal = Math.min(100, state.clickAppeal + 30);
       state.traffic += 10;
-      setDialog('유입 사유', '혜택과 호기심을 동시에 건드리는 멘트입니다. 클릭할 이유가 생깁니다.');
-      t.active = false;
+      setDialog('유입 사유', '“당신 상황에서 얼마를 받을 수 있는지 바로 확인해 보라”는 식의 멘트는 이득과 궁금증을 동시에 건드립니다.');
+      t.active=false;
       break;
 
+    // 광고 / 수익 구조
     case 'engine':
       state.traffic += 40;
       state.cpc += 0.4;
-      setDialog('광고 엔진 가동', '소액 광고비로 데이터를 빠르게 모읍니다. 시간 복사가 시작됩니다.');
+      setDialog('광고 엔진 가동', '소액 광고비로 수개월치 데이터를 단축합니다. 손실이 아니라 학습 속도를 올리는 시간 복사입니다.');
       break;
-
     case 'cpa':
       state.cpc += 1.2;
       state.traffic += 15;
-      setDialog('수익 파이프라인', 'CPA와 제휴를 연결해 광고 외 수익을 추가합니다.');
-      t.active = false;
+      setDialog('수익 파이프라인', 'CPA와 제휴를 연결해 광고 외 수익을 추가합니다. 수익의 두께가 달라집니다.');
+      t.active=false;
       break;
-
     case 'brand':
       state.cpc += 0.6;
       state.traffic += 20;
       state.clickAppeal = Math.min(100, state.clickAppeal + 10);
-      setDialog('브랜딩', '브랜드가 생기면 플랫폼이 바뀌어도 사람이 따라옵니다. 장기 버프가 시작됩니다.');
-      t.active = false;
+      state.core = Math.min(100, state.core + 10);
+      setDialog('브랜딩', '브랜드가 생기면 플랫폼이 바뀌어도 사람이 따라옵니다. 코어와 수익 구조 모두에 장기 버프가 걸립니다.');
+      t.active=false;
       break;
 
+    // 엔딩
     case 'stamp':
-      setDialog('시스템 알림', '잠재 트래픽, 노출, 유입 사유의 3박자가 완성되었습니다. 로그아웃을 진행합니다...');
+      setDialog('시스템 알림', '코어·원리·기술이 정렬되고, 잠재 트래픽·노출·유입 사유의 3박자가 완성되었습니다. 로그아웃을 진행합니다...');
       updateRevenue();
-      setTimeout(()=>{
-        state.phase='end';
-        showEndScreen();
-      }, 1800);
+      updateMeta();
+      setTimeout(()=>{ state.phase='end'; showEndScreen(); }, 1800);
       return;
   }
 
@@ -595,72 +607,74 @@ function executeTargetAction(t){
   updateMeta();
 }
 
+// ───────────────── 몬스터 / 스테이지 전환 ─────────────────
 function attackMonster(){
   state.monster.shake = 1;
   state.camShake = 1.5;
   state.monster.hits += 1;
 
   if(state.monster.hits < 3){
-    setDialog('대형 키워드 몬스터', `[데미지 0] 데이터 없는 노가다는 상단을 뚫지 못한다! (타격 횟수: ${state.monster.hits}/3)`);
+    setDialog('대형 키워드 몬스터', `[데미지 0] 딸깍 환상에 빠진 노가다는 상단을 뚫지 못한다! (타격 횟수: ${state.monster.hits}/3)`);
   } else {
-    setDialog('시스템 알림', '가짜 노력의 한계를 체감했습니다. 이제 데이터 기반 전략으로 전환합니다.');
+    setDialog('시스템 알림', '가짜 노력의 한계를 체감했습니다. 이제부터는 원리와 데이터로 움직여야 합니다.');
     flashAlpha = 0.6;
     setTimeout(()=>{
-      state.monster.alive = false;
-      advanceStage(3, '노출 가능성 판단', 'dataroom');
+      state.monster.alive=false;
+      advanceStage(3,'노출 가능성·벤치마킹','dataroom');
       setStageTargets(3);
-      setDialog('박사님', '이제 상단 구조를 벤치마킹하고, 노출되는 결로 확장하게.');
+      setDialog('박사님','이제 산 중간, 원리 단계다. 상단 글을 벤치마킹하고, 노출되는 결로 확장하게.');
       updateMeta();
-    }, 1200);
+    },1200);
   }
 }
 
 function stageProgressCheck(){
   if(state.stage===1){
+    const corePicked = state.core > 0;
     const remainingKeywordCards = state.targets.filter(t=>['kwPast','kwTooEarly','kwHot'].includes(t.type) && t.active).length;
-    if(state.keywordPotential >= 40 && remainingKeywordCards === 0){
-      advanceStage(2, '가짜 노력의 함정', 'fishing');
+    if(corePicked && state.keywordPotential>=40 && remainingKeywordCards===0){
+      advanceStage(2,'가짜 노력의 함정','fishing');
       state.targets = [];
-      state.monster = { x: 450, y: 340, alive: true, shake: 0, hits: 0 };
-      setDialog('박사님', '좋은 키워드를 고르는 감은 생겼군. 하지만 덩치 큰 키워드 환상도 깨야 한다.');
+      state.monster = { x:450, y:340, alive:true, shake:0, hits:0 };
+      setDialog('박사님','좋다. 이제 대부분이 빠지는 가짜 노력의 함정을 직접 부딪혀 보게.');
       flashAlpha = 0.35;
     }
   }
 
   if(state.stage===3){
-    if(state.keywordPotential >= 40 && state.exposureScore >= 60){
-      advanceStage(4, '유입 사유 설계', 'construction');
+    if(state.keywordPotential>=40 && state.exposureScore>=60 && state.principle>=30){
+      advanceStage(4,'유입 사유 설계','construction');
       setStageTargets(4);
-      setDialog('박사님', '노출되는 키워드와 안 되는 키워드를 구분했군. 이제 왜 눌러야 하는지를 설계하게.');
+      setDialog('박사님','노출되는 키워드와 안 되는 키워드를 구분했군. 이제 “왜 들어와야 하는지”를 설계하게.');
       flashAlpha = 0.35;
     }
   }
 
   if(state.stage===4){
-    const ctaDone = state.targets.filter(t=>['ctaBad','ctaMid','ctaGood'].includes(t.type) && t.active).length === 0;
-    if(state.clickAppeal >= 25 && ctaDone){
-      advanceStage(5, '시간 복사 엔진', 'engine');
+    const ctaDone = state.targets.filter(t=>['ctaBad','ctaMid','ctaGood'].includes(t.type) && t.active).length===0;
+    if(state.clickAppeal>=25 && ctaDone){
+      advanceStage(5,'시간 복사 엔진','engine');
       setStageTargets(5);
-      setDialog('박사님', '좋다. 이제 수와 단가를 빠르게 키우는 레버리지를 가동하게.');
+      setDialog('박사님','좋다. 이제 수·단가·유입 사유를 레버리지로 가속할 차례다.');
       flashAlpha = 0.35;
     }
   }
 
   if(state.stage===5){
-    if(state.traffic >= 80 && state.cpc >= 1.8){
-      advanceStage(6, '수익 구조 확장', 'engine');
+    if(state.traffic>=80 && state.cpc>=1.8){
+      advanceStage(6,'수익 구조 확장','engine');
       setStageTargets(6);
-      setDialog('박사님', '트래픽이 모였으니 CPA와 브랜딩으로 구조를 두껍게 만들 차례다.');
+      setDialog('박사님','애드센스에만 기대지 말고 CPA, 제휴, 브랜딩으로 층을 쌓게.');
       flashAlpha = 0.35;
     }
   }
 
   if(state.stage===6){
-    const done = state.targets.filter(t=>['cpa','brand'].includes(t.type) && t.active).length === 0;
+    const done = state.targets.filter(t=>['cpa','brand'].includes(t.type) && t.active).length===0;
     if(done){
-      advanceStage(7, '프리셀 완성', 'meadow');
+      advanceStage(7,'프리셀·브랜딩 완성','meadow');
       setStageTargets(7);
-      setDialog('박사님', '수익화 공식이 완성됐다. 마지막 도장으로 시스템을 마무리하게.');
+      setDialog('박사님','이제 마지막 프리셀을 마무리하면, 코어 기반 연금형 구조가 완성된다.');
       flashAlpha = 0.45;
     }
   }
@@ -670,63 +684,70 @@ function setStageTargets(stage){
   state.targets = [];
   if(stage===1){
     state.targets = [
-      { x:120, y:350, type:'fishing', active:true },
-      { x:210, y:270, type:'kwPast', active:true },
-      { x:300, y:360, type:'kwTooEarly', active:true },
-      { x:430, y:260, type:'kwHot', active:true }
+      { x:120, y:280, type:'coreMeh', active:true },
+      { x:300, y:260, type:'coreFast', active:true },
+      { x:480, y:280, type:'coreTrue', active:true },
+      { x:150, y:380, type:'kwPast', active:true },
+      { x:300, y:400, type:'kwTooEarly', active:true },
+      { x:450, y:370, type:'kwHot', active:true },
+      { x:300, y:330, type:'fishing', active:true }
     ];
-  } else if(stage===3){
+  }else if(stage===3){
     state.targets = [
       { x:130, y:360, type:'dataroom', active:true },
       { x:290, y:260, type:'benchGood', active:true },
       { x:450, y:350, type:'benchGood', active:true },
       { x:210, y:450, type:'benchBad', active:true }
     ];
-  } else if(stage===4){
+  }else if(stage===4){
     state.targets = [
       { x:120, y:360, type:'construction', active:true },
       { x:250, y:270, type:'ctaBad', active:true },
       { x:350, y:420, type:'ctaMid', active:true },
       { x:470, y:290, type:'ctaGood', active:true }
     ];
-  } else if(stage===5){
+  }else if(stage===5){
     state.targets = [
       { x:170, y:340, type:'engine', active:true },
       { x:430, y:270, type:'engine', active:true }
     ];
-  } else if(stage===6){
+  }else if(stage===6){
     state.targets = [
       { x:180, y:340, type:'cpa', active:true },
       { x:420, y:290, type:'brand', active:true }
     ];
-  } else if(stage===7){
+  }else if(stage===7){
     state.targets = [
       { x:400, y:300, type:'stamp', active:true }
     ];
   }
 }
 
-function advanceStage(newStage, labelTxt, newBg){
+function advanceStage(newStage,labelTxt,newBg){
   state.stage = newStage;
   state.bgDecor = newBg;
   document.getElementById('stage-label').textContent = `STAGE ${newStage}: ${labelTxt}`;
 }
 
-function setDialog(speaker, txt){
+// ───────────────── UI & 수익 계산 ─────────────────
+function setDialog(speaker,txt){
   const sp = document.getElementById('dialog-speaker');
   sp.textContent = speaker;
   sp.style.color =
     speaker==='박사님' ? '#00ff99' :
     (speaker.includes('몬스터') ? '#ef4444' :
+    (speaker.includes('코어') ? '#22c55e' :
     (speaker.includes('유입') ? '#fbbf24' :
-    (speaker.includes('데이터') ? '#a855f7' : '#38bdf8')));
+    (speaker.includes('데이터') ? '#a855f7' : '#38bdf8'))));
   document.getElementById('dialog-text').textContent = txt;
 }
 
 function updateRevenue(){
   const baseRev = state.traffic * state.cpc;
-  const appealBonus = 1 + (state.clickAppeal / 200);
-  const rev = baseRev * appealBonus;
+  const appealBonus = 1 + (state.clickAppeal / 200); // 최대 +50%
+  const coreBonus = 1 + (state.core / 500);          // 코어 100 → +20%
+  const principleBonus = 1 + (state.principle / 500);// 원리 100 → +20%
+  const rev = baseRev * appealBonus * coreBonus * principleBonus;
   state.score = rev;
   document.getElementById('revenue').textContent =
     `REVENUE: $${rev.toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2})}`;
@@ -734,20 +755,20 @@ function updateRevenue(){
 
 function updateMeta(){
   document.getElementById('meta-label').textContent =
-    `수: ${state.traffic} | 단가: $${state.cpc.toFixed(2)} | 잠재력: ${state.keywordPotential} | 노출: ${state.exposureScore} | 유입 사유: ${state.clickAppeal}`;
+    `수: ${state.traffic} | 단가: $${state.cpc.toFixed(2)} | 잠재력: ${state.keywordPotential} | 노출: ${state.exposureScore} | 유입: ${state.clickAppeal}\n코어: ${state.core} | 원리: ${state.principle}`;
 }
 
 function showEndScreen(){
-  const el = document.createElement('div');
+  const el=document.createElement('div');
   el.id='end-screen';
   el.style.cssText='position:absolute;inset:0;background:rgba(5,10,15,0.95);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;pointer-events:auto;z-index:100;';
   el.innerHTML = `
     <div style="font-size:56px;text-shadow:0 0 20px rgba(234,179,8,0.5);">⭐</div>
-    <h1 style="font-size:32px;font-weight:700;color:#00ff99;text-align:center;">수익화 공식 완성</h1>
+    <h1 style="font-size:32px;font-weight:700;color:#00ff99;text-align:center;">코어 기반 수익화 공식 완성</h1>
     <p style="color:#94a3b8;font-size:15px;text-align:center;line-height:1.8;max-width:470px;">
       최종 수익: <strong style="color:#00ff99;font-size:20px;">$${state.score.toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2})}</strong><br>
-      잠재 트래픽이 있는 키워드를 고르고, 노출되는 결로 확장하며, 매력적인 유입 사유를 설계한 결과입니다.<br>
-      이제부터는 운이 아니라, 당신이 설계한 본질 센스가 수익을 결정합니다.
+      코어(나)와 근본 원리 위에, 잠재 트래픽·노출·유입 사유의 3박자를 쌓아 올린 결과입니다.<br>
+      이제부터는 남의 노하우가 아니라, 당신이 설계한 구조가 수익을 결정합니다.
     </p>
     <button onclick="location.reload()" style="background:#00ff99;color:#050a0f;border:none;border-radius:6px;padding:12px 32px;font-size:16px;font-weight:700;cursor:pointer;font-family:'Satoshi',sans-serif;margin-top:10px;">
       다시 증명하기
@@ -756,6 +777,7 @@ function showEndScreen(){
   document.getElementById('wrap').appendChild(el);
 }
 
+// ───────────────── 루프 / 시작 ─────────────────
 let _fpsF=0,_fpsL=performance.now(),_fpsVal=0;
 function updateFPS(now){
   _fpsF++;
@@ -778,10 +800,11 @@ function loop(now){
 document.getElementById('start-btn').addEventListener('click', ()=>{
   document.getElementById('start-screen').remove();
   state.phase = 'play';
+  advanceStage(1,'코어와 잠재 트래픽','fishing');
   setStageTargets(1);
   updateRevenue();
   updateMeta();
-  setDialog('박사님', '수익은 수와 가격의 곱이지만, 시작은 잠재 트래픽이다. 먼저 사람들이 앞으로 찾아올 주제를 고르게.');
+  setDialog('박사님','코어(나) → 원리(구조) → 기술(방법) 순서로 올라가야 한다. 먼저 진짜 나의 코어와, 앞으로 사람들이 찾아올 주제를 고르게.');
   lastTime = performance.now();
   requestAnimationFrame(loop);
 });
